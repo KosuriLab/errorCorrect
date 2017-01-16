@@ -1,7 +1,7 @@
 A systematic comparison of error correction enzymes by next-generation sequencing
 ================================================================================
 
-This repository contains everything needed (sans data) to generate our paper. A pre-print of the manuscript is openly availible on [biorXiv](http://biorxiv.org/content/early/2017/01/15/100685). Running `make all` in `analysis` will process the raw data and generate the manuscript. The `Makefile` is also compatible with parallel builds.
+This repository contains everything needed (sans data) to generate our paper. A pre-print of the manuscript is openly available on [bioRxiv](http://biorxiv.org/content/early/2017/01/15/100685). Running `make all` in `analysis` will process the raw data and generate the manuscript. The `Makefile` is also compatible with parallel builds.
 
 Please note that our pipeline will use a significant amount of RAM, and will generate ~8Gb of intermediate files. Much of this comes from running the pipeline in parallel (especially the filtering steps).
 

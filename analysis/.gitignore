@@ -8,6 +8,3 @@
 *_files
 *.html
 *.Rhistory
-data/*
-pipeline/*
-output/*

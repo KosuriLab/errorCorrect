@@ -96,8 +96,8 @@ pipeline/%.csv: ref-seq.fasta pipeline/%.merge.fastq
 pipeline/eColi-phiX.fasta:
 	@# Actions:
 	@#    Grab eColi and PhiX genomes from the ncbi
-	curl -s "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=U00096.3&rettype=fasta&retmode=text" > $@
-	curl -s "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001422.1&rettype=fasta&retmode=text" >> $@
+	curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=U00096.3&;rettype=fasta&;retmode=text" > $@
+	curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&amp;id=NC_001422.1&amp;rettype=fasta&amp;retmode=text" >> $@
 
 
 pipeline/%.baseq.txt: pipeline/%.merge.fastq
