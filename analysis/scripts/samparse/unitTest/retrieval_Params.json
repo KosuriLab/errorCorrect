@@ -1,0 +1,59 @@
+[
+{
+"name":"Four MM",
+"left":1,
+"cigar":"100M",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===================G=======================================G==========C============================C",
+"md":"19T39A10A28G0",
+"answer":[[19, "M", "TG"], [59, "M", "AG"], [70, "M", "AC"], [99, "M", "GC"]]
+},
+
+{
+"name":"Big_Deletion",
+"left":1,
+"cigar":"12M4D84M",
+"md":"12^CATA9C59G14",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"=====================A===========================================================C==============",
+"answer":[[12, "P", "CATA"], [21, "M", "CA"], [81, "M", "GC"]]
+},
+
+{
+"name":"Big_Insert",
+"left":1,
+"cigar":"88M6I12M",
+"md":"1C59G38",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"=G===========================================================A==========================TTGTAT============",
+"answer":[[1, "M", "CG"], [61, "M", "GA"], [88, "S", "TTGTAT"]]
+},
+
+{
+"name":"Double_Insert",
+"left":1,
+"cigar":"38M1I44M1I18M",
+"md":"27C18G8G44",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===========================A==========A========T========C==========================G==================",
+"answer":[[27, "M", "CA"], [38, "I", "A"], [47, "M", "GT"], [56, "M", "GC"], [83, "I", "G"]]
+},
+
+{
+"name":"Double_Del",
+"left":1,
+"cigar":"44M1D1M2D52M",
+"md":"3G6T33^A1^GG23C16T11",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===A======G=========================================================A================G===========",
+"answer":[[3, "M", "GA"], [10, "M", "TG"], [44, "D", "A"], [46, "P", "GG"], [68, "M", "CA"], [85, "M", "TG"]]
+}
+
+
+
+
+
+
+
+]
+

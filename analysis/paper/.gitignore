@@ -1,0 +1,17 @@
+*.sty
+*.cls
+*.clo
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.log
+*.gz
+*.bak
+*.out
+*.dvi
+*.ps

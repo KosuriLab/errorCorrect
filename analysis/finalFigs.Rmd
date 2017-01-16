@@ -1,0 +1,1231 @@
+---
+title: "Enzmatic Error Correction Figures"
+author: "Nathan Lubock"
+date: "January, 2016"
+output: pdf_document
+css: scroll.css
+---
+
+# R Stuff
+## Knitr Options
+```{r}
+knitr::opts_chunk$set(fig.width = 17.5, fig.height = 10.94, dpi=300)
+knitr::opts_chunk$set(fig.path = "./paper/")
+knitr::opts_chunk$set(dev='pdf')
+knitr::opts_chunk$set(warning=FALSE)
+
+# see http://stackoverflow.com/q/36230790 to scroll output
+# needs to be really big to prevent wrapping from happening before the scroll bar comes up
+options(width = 240)
+```
+
+
+## Initialization
+```{r, message=F}
+# plotting utils
+library(scales)
+library(grid)
+library(gridExtra)
+
+# data.table backend
+library(dtplyr)
+library(data.table)
+
+# tidyverse!
+library(stringr)
+library(broom)
+library(magrittr)
+library(tidyverse)
+```
+
+
+## Style Choices
+```{r, pallete}
+theme_pub <- function(base_size = 13, base_family = "") {
+  require(grid)
+  # based on https://github.com/noamross/noamtools/blob/master/R/theme_nr.R
+  # start with theme_bw and modify from there!
+  theme_bw(base_size = base_size, base_family = base_family) +# %+replace%
+    theme(
+      # grid lines
+      panel.grid.major.x = element_line(colour="#ECECEC", size=0.5, linetype=1),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.y = element_line(colour="#ECECEC", size=0.5, linetype=1),
+      panel.background   = element_blank(),
+
+      # axis options
+      axis.ticks.y   = element_blank(),
+      axis.title.x   = element_text(size=rel(2.25), vjust=0.25),
+      axis.title.y   = element_text(size=rel(2.25), vjust=0.35),
+      axis.text      = element_text(color="black", size=rel(1.5)),
+
+      # legend options
+      legend.title    = element_blank(),
+      legend.key      = element_rect(fill="white"),
+      legend.key.size = unit(1, "cm"),
+      legend.text     = element_text(size=rel(2)),
+
+      # facet options
+      strip.text = element_text(size=rel(2)),
+
+      # title options
+      plot.title = element_text(size=rel(3), vjust=0.25, hjust=0.5)
+      )
+  }
+
+# set the theme and brewer color
+theme_set(theme_pub())
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+```
+
+## Helper Functions
+```{r, functions}
+DistribUncert2 <- function(df) {
+  # Takes a df with uncertain types and manually distributes them, returning a
+  # df of counts ready for plotting. Since we cannot place the insertion or
+  # deletion precisely, we will assign fractional counts to each position based
+  # on the nature of the difference. For example, a deletion in a 'AAA' repeat
+  # could be at any of the A's, so we will assign a 1/3 count to each position
+  #
+  # Args:
+  #   df - a data frame that must have the following:
+  #     ColNames: Pos, Diff, Type
+  #     Type: Must contain 'UI' and 'UD'
+  # Returns:
+  #   df - data frame with colnames Pos, Type, Count
+  require(dplyr, magrittr, stringr)
+  uncert <- df %>%
+    filter(Type %in% c('UI', 'UD')) %>%
+    mutate(
+      To=str_sub(Diff, 2, 2),
+      From=str_sub(Diff, 1, 1),
+      Diff=str_sub(Diff, -1),
+      Type=str_sub(Type, -1),
+      FracCount=1/as.numeric(From)
+    ) %>%
+    select(c(-From, -To))
+
+  # filter the canonical types and summarize their counts as well
+  canon <- df %>%
+    filter(!(Type %in% c('UI', 'UD'))) %>%
+    mutate(FracCount=1)
+
+  return(bind_rows(uncert, canon))
+}
+
+LabelMaker <- function(graph, label){
+  # Takes a ggplot and adds a label to the top-left corner.
+  # Must be used in conjunction with grid.arrange to plot
+  # See: https://stackoverflow.com/a/29863172
+  # Args:
+  #   graph - a ggplot
+  #   label - text string to add as label
+  # Returns:
+  #   gtable with plot and label
+  require(ggplot2, grid, gridExtra)
+  myplot <- arrangeGrob(
+    graph,
+    top = textGrob(
+      label,
+      x = unit(0, 'npc'),
+      y = unit(1, 'npc'),
+      just = c('left', 'top'),
+      gp = gpar(fontsize=32)
+    )
+  )
+
+  return(myplot)
+}
+```
+
+## Data Loading
+We can get about at 10x speed-up by using pure `data.table`'s, however, some of `dplyr`'s functionality does not seem to behave quite right (especially joins). This is a known issue, and is being worked on.
+```{r, constants, message=FALSE, warning=FALSE, results='hide'}
+ref.seq <- "GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG"
+refCounts <- data.table(
+  Char = c('A', 'T', 'G', 'C', 'N'),
+  Count = c(str_count(ref.seq, 'A'),
+            str_count(ref.seq, 'T'),
+            str_count(ref.seq, 'G'),
+            str_count(ref.seq, 'C'),
+            str_count(ref.seq, 'N'))
+  )
+
+# set working directory here for local dev
+# setwd('/FOO/BAR/BAZ')
+
+# constants for all samples
+readCounts <- fread('./output/read-counts.txt', header=T)
+
+# requisite information for all treatments
+charCounts <- fread('zcat ./output/char-counts.txt.gz', header=T)
+allSamps <- fread('zcat ./output/errs-all-samples.csv.gz', header=T)
+
+# the zcat trick above may not work on your machine...
+# charCounts <- fread('./output/char-counts.txt', header=T)
+# allSamps <- fread('./output/errs-all-samples.csv', header=T)
+
+# subset variables for easy running
+nonDoped <- allSamps %>% filter(Sample == '1_nonDoped')
+doped <- allSamps %>% filter(Sample == '1_DopedTemp')
+```
+
+
+
+
+# Main Figures
+## Figure 2 - Error Analysis for a Standard Oligo Assembly
+```{r, Figure_2, fig.width=17.5, fig.height=17.5}
+#-------------------------------------------------------------------------------
+# Panel 1
+# Plot the position of all types of errors
+
+# We need to make sure that any 0's are actually caught for plotting
+# nonDoped %>%
+#   DistribAndNorm(., 1) %>%
+#   complete(Type, Pos, fill=list('Norm'=0))
+
+positions <- nonDoped %>%
+  DistribUncert2() %>%
+  count(Pos, Type, wt=FracCount) %>%
+  filter(Type != 'S') %>%
+  ungroup() %>%
+  mutate(
+    Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads,
+    Type = Type %>%
+      factor(levels = c('M', 'I', 'D', 'P')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', M = 'Mismatches')
+  ) %>%
+  ggplot(aes(x=Pos, y=Norm)) +
+  geom_point(size=3) +
+  facet_wrap(~ Type, ncol=2) +
+  stat_smooth(se=F) +
+  labs(x = 'Position',
+       y = 'Error Rate',
+       title = 'Error Rate vs. Position for Error Sub-types') +
+  scale_y_log10() +
+  annotation_logticks(sides='l')
+
+#-------------------------------------------------------------------------------
+# Panel 1b
+# Percentage of Error Subtypes
+
+sub_type <- nonDoped %>%
+    DistribUncert2() %>%
+  count(Type, wt=FracCount) %>%
+  mutate(
+    Norm = n / sum(n) * 100,
+    Type = Type %>%
+      factor(levels = c('M', 'D', 'P', 'I', 'S')) %>%
+      recode(M = 'MM', D = 'Del.', P = 'M. Del.', I = 'Ins.', S = 'M. Ins.')
+    ) %T>%
+  {arrange(., -Norm) %>% print()} %>%
+  ggplot(aes(x=Type, y=Norm)) +
+  geom_bar(stat='identity') +
+  theme(plot.title = element_text(size=rel(2))) +
+  labs(
+    y = 'Percent',
+    x = 'Error Type',
+    title = 'Percentage of Error Sub-types'
+  )
+
+#-------------------------------------------------------------------------------
+# Panel 1c
+# plot the distribution of total mismatches per position
+mm_freq <- nonDoped %>%
+  filter(Type == 'M') %>%
+  mutate(
+    To = str_sub(Diff, 2, 2),
+    From = str_sub(Diff, 1, 1)
+  ) %>%
+  count(Pos, From) %>%
+  ungroup() %>%
+  # left_join(rename(refCounts, From=Char), by='From') %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %T>%
+  { # pairwise wilcox test and print median values for paper
+    group_by(., From) %>%
+      summarise(med=median(Norm)) %>%
+      arrange(-med) %>%
+      print; # <- ; critical for . to be interpreted correctly
+    with(., pairwise.wilcox.test(n, From)) %>% print
+  } %>%
+  ggplot(aes(x = From, y = Norm)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(position=position_jitter(w = 0.5), size=0.75, alpha=0.8) +
+  # stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, geom = 'crossbar', width = 0.5) +
+  labs(
+    y = 'Error Rate',
+    title = 'Mismatches per Position'
+  ) +
+  theme(
+    axis.text.x = element_text(size=28),
+    axis.title.x = element_blank(),
+    plot.title = element_text(size=rel(2.25))
+  ) +
+  scale_y_continuous(labels = scientific_format())
+
+#-------------------------------------------------------------------------------
+# Panel 1d
+# what bases are most likely mutated to
+# We will normallize by the total count in each "from" group
+mm_type <- nonDoped %>%
+  filter(Type == 'M') %>%
+  count(Pos, Diff) %>%
+  ungroup() %>%
+  mutate(
+    Char=str_sub(Diff, 1, 1),
+    Class=Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion')
+  ) %>%
+  # left_join(refCounts, by='Char') %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %T>%#(Count * subset(readCounts, Sample == '1_nonDoped')$Reads)) %T>%
+  {# significance testing and printing for paper
+    group_by(., Diff) %>%
+      summarise(med=median(Norm)) %>%
+      arrange(-med) %>%
+      print; # <- ; critical for . to be interpreted correctly
+      with(., pairwise.wilcox.test(Norm, Diff)) %>% print
+  } %>%
+  ggplot(aes(x = Diff, y = Norm, color=Class)) +
+  geom_boxplot(outlier.shape = NA, show.legend = FALSE) +
+  geom_jitter(position=position_jitter(w = 0.5), size=0.75, alpha=0.8) +
+  # stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, geom = 'crossbar', width = 0.5, color='black') +
+  labs(
+    y = 'Error Rate',
+    title = 'Mismatch Sub-types per Pos.'
+    ) +
+  theme(
+    legend.position='bottom',
+    legend.key.size=unit(0.75, "cm"),
+    axis.title.x=element_blank(),
+    axis.text.x = element_text(angle = 315, vjust=0.5),
+    plot.title = element_text(size=rel(1.75))
+  ) +
+  scale_y_continuous(labels = scientific_format()) +
+  scale_color_manual(values = c('#7b3294', '#008837')) +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+#-------------------------------------------------------------------------------
+# plot everything!
+grid.arrange(
+  LabelMaker(positions, 'A)'),
+  arrangeGrob(
+    LabelMaker(sub_type, 'B)'),
+    LabelMaker(mm_freq, 'C)'),
+    LabelMaker(mm_type, 'D)'),
+    nrow=1),
+  ncol=1,
+  heights = c(1, 0.67)
+  )
+
+```
+
+```{r, Figure_2_vals}
+# pairwise test of medians for each group
+nonDoped %>%
+  DistribUncert2() %>%
+  count(Type, Pos, wt=FracCount) %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %T>%
+  with(., pairwise.wilcox.test(Norm, Type) %>% print) %>%
+  group_by(Type) %>%
+  summarise(med=median(Norm), mean=mean(Norm))
+
+# insertions at position 1
+nonDoped %>%
+  DistribUncert2() %>%
+  filter(Type == 'I', Pos == 1) %>%
+  count(Diff)
+
+# differences in medians in annealing regions and outside
+nonDoped %>%
+    DistribUncert2() %>%
+    count(Type, Pos, wt=FracCount) %>%
+    mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %>%
+    filter(Type == 'P') %>%
+  mutate(Region = if_else(Pos >= 36 & Pos <=64, 'Anneal', 'No')) %T>%
+  {wilcox.test(Norm ~ Region, data=.) %>% print} %>%
+  group_by(Region) %>%
+  summarise(med=median(Norm), IQR=IQR(Norm))
+
+```
+
+
+## Figure 3 - Error Correction and Percent Perfects
+```{r, errRates}
+# reduce the all of the reads down to errors/read (this may take a while...)
+# join with the length of every read and fill in perfects with a 0 count
+# errRate calculation from Furhman paper
+errRates <- allSamps %>%
+  count(Sample, Name) %>%
+  left_join(charCounts, ., by = c('Sample', 'Name')) %>%
+  replace_na(list(n=0)) %>%
+  group_by(Sample) %>%
+  summarise(
+    errRate = mean(n * (1000/Len)),
+    sem = sd(n*(1000/Len)) / sqrt(n())
+  ) %>%
+  left_join(readCounts, by='Sample') %>%
+  mutate(
+    PercentPerf = (Reads - Errs) / Reads * 100,
+    Treatment = str_sub(Sample, 1, 1),
+    Sample = str_sub(Sample, 3),
+    # Pretty printing for figures
+    Sample = Sample %>%
+      recode(nonDoped='Standard Oligo', DopedTemp='Doped Oligo',
+             MutS_1900nM='MutS (1900nM)', MutS_950nM='MutS (950nM)',
+             T7EndoIFurhmann='T7 EndoI (Fuhrmann)', T4EndoVII='T4 EndoVII',
+             T7EndoI='T7 EndoI (0U T7 Lig.)',
+             `T7EndoI-e3T7Ligase`='T7 EndoI (1e3U T7 Lig.)',
+             `T7EndoI-e4T7Ligase`='T7 EndoI (1e4U T7 Lig.)',
+             `ErrASE-nonDoped` = 'Standard Oligo (ErrASE)')
+  )
+```
+
+```{r, Figure_3}
+# manual ordering for nice plots
+plt.order <- c('Standard Oligo (ErrASE)', 'Standard Oligo', 'MutS (1900nM)',
+           'MutS (950nM)', 'ErrASE', 'T7 EndoI (Fuhrmann)',
+           'T4 EndoVII', 'Surveyor', 'T7 EndoI (0U T7 Lig.)',
+           'T7 EndoI (1e3U T7 Lig.)', 'T7 EndoI (1e4U T7 Lig.)',
+           'EndoV', 'Doped Oligo')
+
+errRates %>%
+  # add in 0's for doped and nonDoped
+  select(c(-Errs, -Reads, -sem)) %>%
+  bind_rows(
+    data.table(Sample=c('Doped Oligo', 'Standard Oligo'),
+               errRate=c(0.0, 0.0),
+               PercentPerf=c(0.0, 0.0),
+               Treatment=c('2', '2'))
+  ) %>%
+  gather(Metric, Value, PercentPerf, errRate) %>%
+  mutate(
+    Metric=if_else(Metric == 'PercentPerf',
+                   "Percent Perfect Reads",
+                   "Error Frequency (per kb)") %>%
+      factor(levels=c("Percent Perfect Reads",
+                      "Error Frequency (per kb)")),
+    Sample = factor(Sample, levels = plt.order)
+  ) %>%
+  ggplot(aes(x=Sample, y=Value, fill=Treatment)) +
+  geom_bar(stat='identity', position='dodge') +
+  facet_wrap(~ Metric, nrow=2) +
+  theme(
+    axis.text.x=element_text(angle=315, hjust=0.15, vjust=0.90, size=rel(1.0)),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    legend.title=element_text(size=rel(2.25)),
+    legend.position="bottom"
+    ) +
+  scale_y_continuous(breaks=seq(0,60,10)) +
+  scale_fill_manual(name="Treatment Round:",
+                      values=c("#ca0020", "#0571b0"))
+```
+
+
+## Figure 4 - Enzyme Preferences
+```{r, enzPref}
+enzPref <- allSamps %>%
+  DistribUncert2() %>%
+  count(Sample, Type, Pos, wt=FracCount) %>%
+  ungroup() %>%
+  left_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Treatment=str_sub(Sample, 1, 1),
+    Sample=str_sub(Sample, 3),
+    Norm=n / Reads
+  ) %>%
+  # Grab the normalized data from DopedTemp for easy divide
+  left_join(.,
+            filter(., Sample == 'DopedTemp') %>%
+              transmute(Type=Type, Pos=Pos, Dope_Norm=Norm),
+            by = c('Type', 'Pos')
+  ) %>%
+  mutate(
+    Rel_Norm = Norm / Dope_Norm,
+    Fold_2 = log2(Rel_Norm),
+    Fold = 2^-Fold_2,
+    # pretty print for figures
+    Sample = Sample %>%
+      recode(nonDoped='Standard Oligo', DopedTemp='Doped Oligo',
+             MutS_1900nM='MutS (1900nM)', MutS_950nM='MutS (950nM)',
+             T7EndoIFurhmann='T7 EndoI (Fuhrmann)', T4EndoVII='T4 EndoVII',
+             T7EndoI='T7 EndoI (0U T7 Lig.)',
+             `T7EndoI-e3T7Ligase`='T7 EndoI (1e3U T7 Lig.)',
+             `T7EndoI-e4T7Ligase`='T7 EndoI (1e4U T7 Lig.)',
+             `ErrASE-nonDoped` = 'Standard Oligo (ErrASE)')
+  )
+
+#-------------------------------------------------------------------------------
+# specific call-outs for indels and mismatches
+enzPref.idm <- allSamps %>%
+  DistribUncert2() %>%
+  filter(Type %in% c('I', 'M', 'D')) %>%
+  count(Sample, Type, Pos, Diff, wt=FracCount) %>%
+  ungroup() %>%
+  left_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Treatment=str_sub(Sample, 1, 1),
+    Sample=str_sub(Sample, 3),
+    Norm=n / Reads
+    ) %>%
+  # Grab the normalized data from DopedTemp for easy divide
+  left_join(.,
+            filter(., Sample == 'DopedTemp') %>%
+              transmute(Diff=Diff, Type=Type, Pos=Pos, Dope_Norm=Norm),
+            by = c('Type', 'Pos', 'Diff')
+            ) %>%
+  mutate(
+    Rel_Norm = Norm / Dope_Norm,
+    Fold_2 = log2(Rel_Norm),
+    Fold = 2^-Fold_2,
+    Class= Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion'),
+    Sample = Sample %>%
+      recode(nonDoped='Standard Oligo', DopedTemp='Doped Oligo',
+             MutS_1900nM='MutS (1900nM)', MutS_950nM='MutS (950nM)',
+             T7EndoIFurhmann='T7 EndoI (Fuhrmann)', T4EndoVII='T4 EndoVII',
+             T7EndoI='T7 EndoI (0U T7 Lig.)',
+             `T7EndoI-e3T7Ligase`='T7 EndoI (1e3U T7 Lig.)',
+             `T7EndoI-e4T7Ligase`='T7 EndoI (1e4U T7 Lig.)',
+             `ErrASE-nonDoped` = 'Standard Oligo (ErrASE)')
+
+  )
+```
+
+
+```{r, Figure_4}
+# order by error frequency
+plt.order <- c('Standard Oligo (ErrASE)', 'Standard Oligo',
+               'ErrASE', 'T7 EndoI (Fuhrmann)', 'MutS (1900nM)',
+               'MutS (950nM)', 'Surveyor', 'T4 EndoVII',
+               'T7 EndoI (0U T7 Lig.)', 'T7 EndoI (1e3U T7 Lig.)',
+               'T7 EndoI (1e4U T7 Lig.)', 'EndoV', 'Doped Oligo')
+
+#-------------------------------------------------------------------------------
+# Panel 1
+# Plot the positional distribution across enzymes for indels and mm's
+pan1 <- enzPref %>%
+  filter(!Sample %in% c('Doped Oligo', 'Standard Oligo', 'Standard Oligo (ErrASE)')) %>%
+  mutate(
+    Type = case_when(Type == 'D' | Type == 'P' ~ 'Deletions',
+                     Type == 'I' | Type == 'S' ~ 'Insertions',
+                     TRUE ~ 'Mismatches'),
+    # factor madness for proper ordering
+    Type = factor(Type, levels = c('Mismatches', 'Deletions', 'Insertions')),
+    Sample = factor(Sample, levels = plt.order)
+  ) %>%
+  ggplot(aes(x=Sample, y=Fold_2, color=Treatment)) +
+  geom_boxplot() +
+  facet_wrap(~ Type, ncol = 1) +
+  theme(
+    legend.position='bottom',
+    legend.text=element_text(size=rel(1.5)),
+    legend.title=element_text(size=rel(2.25)),
+    axis.text.x=element_text(angle=305, hjust=0.15, vjust=0.90, size=rel(0.85)),
+    axis.title.x=element_blank()
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=2))) +
+  scale_color_manual(
+    name = 'Treatment',
+    values=c("#ca0020", "#0571b0")
+  ) +
+  labs(y='Log2-fold Error Rate Change')
+
+#-------------------------------------------------------------------------------
+# Panel 2
+# Specific call outs for ErrASE/T7 Endo
+pan2 <- enzPref.idm %>%
+  filter(
+    Type == 'M',
+    Treatment == '2',
+    Sample %in% c('ErrASE', 'T7 EndoI (Fuhrmann)')
+  ) %>%
+  mutate(Sym = Diff %>% recode(AC = 'A/T -> C/G', TG='A/T -> C/G',
+                               AG = 'A/T -> G/C', TC='A/T -> G/C',
+                               AT = 'A/T -> T/A', TA='A/T -> T/A',
+                               CA = 'C/G -> A/T', GT='C/G -> A/T',
+                               CG = 'C/G -> G/C', GC='C/G -> G/C',
+                               CT = 'C/G -> T/A', GA='C/G -> T/A')
+  ) %>%
+  ggplot(aes(x=Sym, y=Fold_2, color=Class)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    show.legend = FALSE
+  ) +
+  geom_point(
+    position=position_jitter(),
+    size = 0.25,
+    alpha = 0.8
+  ) +
+  facet_wrap(~ Sample, ncol=1, scales='free_y') +
+  theme(
+    legend.position = 'bottom',
+    axis.title.x=element_blank(),
+    axis.text.x = element_text(angle = 315, vjust=0.5)
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_manual(values = c('#7b3294', '#008837')) +
+  labs(y='Log2-fold Error Rate Change')
+
+grid.arrange(
+  LabelMaker(pan1, 'A)'),
+  LabelMaker(pan2, 'B)'),
+  ncol = 2,
+  widths = c(0.67, 0.33)
+)
+```
+
+```{r, Figure_4_vals}
+# table version of plot
+enzPref %>%
+  filter(!Sample %in% c('Doped Oligo', 'Standard Oligo', 'Standard Oligo ErrASE')) %>%
+  mutate(
+    Type = case_when(Type == 'D' | Type == 'P' ~ 'Deletions',
+                     Type == 'I' | Type == 'S' ~ 'Insertions',
+                     TRUE ~ 'Mismatches')
+  ) %>%
+  group_by(Sample, Treatment, Type) %>%
+  summarise(
+    Mean=mean(Fold),
+    Median=median(Fold)
+  ) %>%
+  ungroup() %>%
+  arrange(Sample, Treatment, Type)
+```
+
+### Figure 4 - Supplement
+#### Sup - Mismatch Preferences
+```{r, Enzyme_Prefs_MM, warning=FALSE}
+enzPref.idm %>%
+  filter(
+    Type == 'M',
+    !Sample %in% c('Doped Oligo', 'Standard Oligo (ErrASE)')
+  ) %>%
+  ggplot(
+    aes(x=Diff,
+        y=Fold_2,
+        color=interaction(Treatment, Class))
+  ) +
+  geom_boxplot(
+    outlier.shape = NA,
+    show.legend = FALSE
+  ) +
+  geom_point(
+    position=position_jitterdodge(),
+    size = 0.25,
+    alpha = 0.8
+  ) +
+  facet_wrap(~ Sample, ncol=3, scales='free_y') +
+  theme(
+    legend.position = 'bottom',
+    axis.title.x=element_blank(),
+    axis.text.x = element_text(angle = 315, vjust=0.5)
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_manual(values = c('#c2a5cf','#7b3294', '#a6dba0','#008837')) +
+  labs(
+    title='Mismatch Reduction Relative to Doped Assembly',
+    y='Log2-fold Error Rate Change'
+  )
+```
+
+There appears to be some real differences here, let's do some testing.
+
+```{r, mm_pref_tests}
+# first run anova to make sure there are diffs in medians
+enzPref.idm %>%
+  filter(
+    Type %in% c('D', 'I', 'M'),
+    !Sample %in% c('Doped Oligo', 'Standard Oligo', 'Standard Oligo (ErrASE)')
+  ) %>%
+  mutate(Diff = factor(Diff)) %>%
+  group_by(Sample, Treatment, Type) %>%
+  do(tidy(kruskal.test(Fold_2 ~ Diff, data=.))) %>%
+  ungroup() %>%
+  select(Sample, Treatment, Type, statistic, p.value)
+
+# transition vs transversions
+enzPref.idm %>%
+  filter(
+    Type == 'M',
+    !Sample %in% c('Doped Oligo', 'Standard Oligo', 'Standard Oligo (ErrASE)')
+  ) %>%
+  group_by(Sample, Treatment) %>%
+  do(tidy(wilcox.test(Fold_2 ~ Class, data=.))) %>%
+  ungroup() %>%
+  select(Sample, Treatment, statistic, p.value)
+
+# median values for paper
+enzPref.idm %>%
+  filter(Treatment == '2') %>%
+  group_by(Sample, Type, Diff) %>%
+  summarise(med = median(Fold)) %>%
+  spread(Sample, med)
+```
+
+```{r, errase_pref}
+# ErrASE cg/gc, ag/tc
+errase.pref <- enzPref.idm %>%
+  filter(
+    Sample == 'ErrASE',
+    Type == 'M'
+  ) %>%
+  mutate(
+    GC = if_else(Diff == 'GC' | Diff == 'CG', 'GC', 'No'),
+    AG = if_else(Diff == 'AG' | Diff == 'TC', 'AG', 'No')
+  ) %>%
+  select(Pos, Diff, Treatment, Fold, GC, AG) %>%
+  gather(Test, Val, GC, AG)
+
+# p.val invariant of fold vs fold_2
+errase.pref %>%
+  group_by(Treatment, Test) %>%
+  do(tidy(wilcox.test(Fold ~ Val, data=.))) %>%
+  ungroup() %>%
+  select(Test, Treatment, statistic, p.value)
+
+errase.pref %>%
+  group_by(Test, Treatment, Val) %>%
+  summarise(med = median(Fold))
+```
+
+
+```{r, t7_pref}
+# T7 ta/at, cg/gc(ligase), ag/tc
+t7.pref <- enzPref.idm %>%
+  filter(
+    str_detect(Sample, 'T7'),
+    Type == 'M'
+  ) %>%
+  mutate(
+    AT = if_else(Diff == 'AT' | Diff == 'TA', 'AT', 'No'),
+    GC = if_else(Diff == 'GC' | Diff == 'CG', 'GC', 'No'),
+    AG = if_else(Diff == 'AG' | Diff == 'TC', 'AG', 'No')
+  ) %>%
+  select(Sample, Pos, Diff, Treatment, Fold, AT, GC, AG) %>%
+  gather(Test, Val, AT, GC, AG)
+
+t7.pref %>%
+  group_by(Sample, Treatment, Test) %>%
+  do(tidy(wilcox.test(Fold ~ Val, data=.))) %>%
+  ungroup() %>%
+  select(Sample, Test, Treatment, statistic, p.value)
+
+t7.pref %>%
+  group_by(Sample, Test, Treatment, Val) %>%
+  summarise(med = median(Fold))
+```
+
+```{r, muts_pref}
+# muts ag/tc cg/gc
+muts.pref <- enzPref.idm %>%
+  filter(
+    str_detect(Sample, 'MutS'),
+    Type == 'M'
+  ) %>%
+  mutate(
+    GC = if_else(Diff == 'GC' | Diff == 'CG', 'GC', 'No'),
+    AG = if_else(Diff == 'AG' | Diff == 'TC', 'AG', 'No')
+  ) %>%
+  select(Sample, Pos, Diff, Treatment, Fold, GC, AG) %>%
+  gather(Test, Val, GC, AG)
+
+muts.pref %>%
+  group_by(Sample, Treatment, Test) %>%
+  do(tidy(wilcox.test(Fold ~ Val, data=.))) %>%
+  ungroup() %>%
+  select(Sample, Test, Treatment, statistic, p.value)
+
+muts.pref %>%
+  group_by(Sample, Test, Treatment, Val) %>%
+  summarise(med = median(Fold))
+```
+
+#### Sup - Deletion Preferences
+Enzyme specificties for single base deletions
+```{r, Enzyme_Prefs_Deletions}
+enzPref.idm %>%
+  filter(
+    Type == 'D',
+    !Sample %in% c('Doped Oligo', 'Standard Oligo (ErrASE)')
+  ) %>%  ggplot(aes(x=Diff, y=Fold_2, color=Treatment)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    show.legend = FALSE
+  ) +
+  geom_point(
+    position=position_jitterdodge(),
+    size = 0.5,
+    alpha = 0.8
+  ) +
+  facet_wrap(~ Sample, ncol=3, scales='free_y') +
+  theme(
+    axis.title.x=element_blank(),
+    legend.title=element_text(size=rel(2)),
+    legend.position=c(0.85, 0.10)
+    ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_manual(
+    name = 'Treatment Round',
+    values = c('#ca0020', '#0571b0')
+  ) +
+  labs(
+    title='Deletion Reduction Relative to Doped Assembly',
+       y='Log2-fold Error Rate Change'
+  )
+```
+
+#### Sup - Insertion Preferences
+Enzyme specificties for single base insertions
+```{r, Enzyme_Prefs_Insertions}
+enzPref.idm %>%
+  filter(
+    Type == 'I',
+    !Sample %in% c('Doped Oligo', 'Standard Oligo (ErrASE)')
+  ) %>%  ggplot(aes(x=Diff, y=Fold_2, color=Treatment)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    show.legend = FALSE
+  ) +
+  geom_point(
+    position=position_jitterdodge(),
+    size = 0.5,
+    alpha = 0.8
+  ) +
+  facet_wrap(~ Sample, ncol=3, scales='free_y') +
+  theme(
+    axis.title.x=element_blank(),
+    legend.title=element_text(size=rel(2)),
+    legend.position=c(0.85, 0.10)
+    ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_manual(
+    name = 'Treatment Round',
+    values = c('#ca0020', '#0571b0')
+  ) +
+  labs(
+    title='Insertion Reduction Relative to Doped Assembly',
+       y='Log2-fold Error Rate Change'
+    )
+```
+
+
+# Extra Supplement
+## Doped Oligo
+### Non-Doped w/ ErrASE
+Can we figure out what the noise floor is for our method? Is there a difference between the standard oligo and its error corrected counterpart?
+```{r, nonDoped_vs_ErrASE}
+allSamps %>%
+  filter(Sample %in% c('1_nonDoped', '1_ErrASE-nonDoped', '2_ErrASE-nonDoped')) %>%
+  DistribUncert2() %>%
+  count(Sample, Type, Pos, wt=FracCount) %>%
+  ungroup() %>%
+  left_join(readCounts, by='Sample') %>%
+  mutate(
+    Norm = n / Reads,
+    Treatment = str_sub(Sample, 1, 1),
+    Sample = str_sub(Sample, 3),
+    Sample = Sample %>%
+      recode(`ErrASE-nonDoped`='ErrASE',
+             nonDoped='Standard Oligo'),
+    Type = Type %>%
+      factor(levels = c('M', 'I', 'D', 'P', 'S')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', S = 'Multiple Base Insertions',
+             M = 'Mismatches')
+  ) %T>%
+  {
+    group_by(., Type) %>%
+      do(with(.,
+              tidy(pairwise.wilcox.test(Norm, interaction(Sample, Treatment))))) %>%
+      print
+  } %>%
+  ggplot(aes(x=Sample, y=Norm, color=Treatment, group=Treatment)) +
+  facet_wrap(~ Type, ncol=2, scales='free_y') +
+  geom_point(
+    size=0.75,
+    alpha=0.8,
+    position=position_jitterdodge()
+  ) +
+  stat_summary(
+    fun.y = median, fun.ymin = median, fun.ymax = median,
+    geom = 'crossbar',
+    width = 0.5,
+    color='black',
+    position=position_dodge(width=0.7)
+  ) +
+  scale_y_log10() +
+  annotation_logticks(sides='l') +
+  theme(
+    legend.title=element_text(size=rel(2)),
+    legend.position=c(0.75, 0.15)
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_manual(
+    name = 'Treatment',
+    values=c("#ca0020", "#0571b0")
+  ) +
+  labs(x = 'Position', y = 'Error Rate')
+
+```
+
+```{r, nonDoped_vs_ErrASE_2}
+allSamps %>%
+  filter(Sample %in% c('1_nonDoped', '1_ErrASE-nonDoped', '2_ErrASE-nonDoped')) %>%
+  filter(Type == 'M') %>%
+  count(Sample, Pos, Diff) %>%
+  ungroup() %>%
+  left_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Norm = n / Reads,
+    Class= Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion')
+  ) %>%
+  ggplot(aes(x = Diff, y = Norm, color=Class)) +
+  geom_boxplot(outlier.shape = NA, show.legend = FALSE) +
+  geom_jitter(position=position_jitter(w = 0.5), size=0.75, alpha=0.8) +
+  facet_wrap(~ Sample, ncol = 1) +
+  labs(
+    y = 'Error Rate',
+    title = 'Mismatch Sub-types per Pos.'
+  ) +
+  theme(
+    legend.position='bottom',
+    legend.key.size=unit(0.75, "cm"),
+    axis.title.x=element_blank(),
+    plot.title = element_text(size=rel(1.75))
+  ) +
+  scale_y_continuous(labels = scientific_format()) +
+  scale_color_manual(values=c("#ca0020", "#0571b0")) +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+
+```
+
+### Doped Analysis
+Here we will run the same sorts of analysis as Figure 2 on the Doped oligo.
+```{r, doped_analysis, fig.width=17.5, fig.height=17.5}
+positions_dope <- doped %>%
+  DistribUncert2() %>%
+  count(Pos, Type, wt=FracCount) %>%
+  filter(Type != 'S') %>%
+  ungroup() %>%
+  mutate(
+    Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads,
+    Type = Type %>%
+      factor(levels = c('M', 'I', 'D', 'P')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', M = 'Mismatches')
+  ) %>%
+  ggplot(aes(x=Pos, y=Norm)) +
+  geom_point(size=3) +
+  facet_wrap(~ Type, ncol=2) +
+  stat_smooth(se=F) +
+  labs(x = 'Position',
+       y = 'Error Rate',
+       title = 'Error Rate vs. Position for Error Sub-types') +
+  scale_y_log10(labels = scientific_format()) +
+  annotation_logticks(sides='l')
+
+#-------------------------------------------------------------------------------
+# Panel 1b
+# Percentage of Error Subtypes
+
+sub_type_dope <- doped %>%
+  DistribUncert2() %>%
+  count(Type, wt=FracCount) %>%
+  mutate(
+    Norm = n / sum(n) * 100,
+    Type = Type %>%
+      factor(levels = c('M', 'D', 'P', 'I', 'S'))  %>%
+      recode(M = 'MM', D = 'Del.', P = 'M. Del.', I = 'Ins.', S = 'M. Ins.')
+  ) %T>%
+  {arrange(., -Norm) %>% print()} %>%
+  ggplot(aes(x=Type, y=Norm)) +
+  geom_bar(stat='identity') +
+  theme(plot.title = element_text(size=rel(2))) +
+  labs(
+    y = 'Percent',
+    x = 'Error Type',
+    title = 'Percentage of Error Sub-types'
+  )
+
+#-------------------------------------------------------------------------------
+# Panel c
+# plot the distribution of total mismatches per position
+mm_freq_dope <- doped %>%
+  filter(Type == 'M') %>%
+  mutate(
+    To = str_sub(Diff, 2, 2),
+    From = str_sub(Diff, 1, 1)
+  ) %>%
+  count(Pos, From) %>%
+  ungroup() %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %T>%
+  { # pairwise wilcox test and print median values for paper
+    group_by(., From) %>%
+      summarise(med=median(Norm)) %>%
+      arrange(-med) %>%
+      print; # <- ; critical for . to be interpreted correctly
+    with(., pairwise.wilcox.test(n, From)) %>% print
+  } %>%
+  ggplot(aes(x = From, y = Norm)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(position=position_jitter(w = 0.5), size=0.75, alpha=0.8) +
+  # stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, geom = 'crossbar', width = 0.5) +
+  labs(y = 'Error Rate per Base',
+       title = 'Mismatches per Pos.') +
+  theme(
+    axis.text.x = element_text(size=28),
+    axis.title.x = element_blank(),
+    plot.title = element_text(size=rel(2.25))
+  ) +
+  scale_y_continuous(labels = scientific_format())
+
+#-------------------------------------------------------------------------------
+# Panel d
+# what bases are most likely mutated to
+# We will normallize by the total count in each "from" group
+mm_type_dope <- doped %>%
+  filter(Type == 'M') %>%
+  count(Pos, Diff) %>%
+  ungroup() %>%
+  mutate(
+    Char=str_sub(Diff, 1, 1),
+    Class= Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion')
+
+  ) %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %T>%
+  {# significance testing and printing for paper
+    group_by(., Diff) %>%
+      summarise(med=median(Norm)) %>%
+      arrange(-med) %>%
+      print; # <- ; critical for . to be interpreted correctly
+      with(., pairwise.wilcox.test(Norm, Diff)) %>% print
+  } %>%
+  ggplot(aes(x = Diff, y = Norm, color=Class)) +
+  geom_boxplot(outlier.shape = NA, show.legend = FALSE) +
+  geom_jitter(position=position_jitter(w = 0.5), size=0.75, alpha=0.8) +
+  # stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, geom = 'crossbar', width = 0.5, color='black') +
+  labs(
+    y = 'Error Rate per Base',
+    title = 'Mismatch Sub-types per Pos.'
+    ) +
+  theme(
+    legend.position='bottom',
+    legend.key.size=unit(0.75, "cm"),
+    axis.title.x=element_blank(),
+    axis.text.x = element_text(angle = 315, vjust=0.5),
+    plot.title = element_text(size=rel(1.75))
+  ) +
+  scale_y_continuous(labels = scientific_format()) +
+  scale_color_manual(values = c('#7b3294', '#008837')) +
+  guides(colour = guide_legend(override.aes = list(size=5)))
+
+#-------------------------------------------------------------------------------
+# plot everything!
+grid.arrange(
+  LabelMaker(positions_dope, 'A)'),
+  arrangeGrob(
+    LabelMaker(sub_type_dope, 'B)'),
+    LabelMaker(mm_freq_dope, 'C)'),
+    LabelMaker(mm_type_dope, 'D)'),
+    nrow=1),
+  ncol=1,
+  heights = c(1, 0.67)
+  )
+
+#-------------------------------------------------------------------------------
+# Values for text
+
+# differences in medians in annealing regions and outside
+doped %>%
+  DistribUncert2() %>%
+  count(Type, Pos, wt=FracCount) %>%
+  mutate(Norm = n / subset(readCounts, Sample == '1_nonDoped')$Reads) %>%
+  filter(Type == 'P') %>%
+  mutate(Region = if_else(Pos >= 36 & Pos <=64, 'Anneal', 'No')) %T>%
+  {wilcox.test(Norm ~ Region, data=.) %>% print} %>%
+  group_by(Region) %>%
+  summarise(med=median(Norm), IQR=IQR(Norm))
+```
+
+Here we will calculate the per-base error rate
+```{r, doped_errRate}
+doped %>%
+  DistribUncert2() %>%
+  count(Sample, Name, Type, wt=FracCount) %>%
+  left_join(
+            filter(charCounts, Sample == '1_DopedTemp'),
+            by=c('Sample', 'Name')
+  ) %>%
+  group_by(Type) %>%
+  summarise(m=sum(n/Len)/filter(readCounts, Sample == '1_DopedTemp')$Reads)
+```
+
+### Doped vs Non-Doped Error Rates
+Here we compare the doped oligo to the non-doped. We see that all error rates are significantly higher in the doped sample.
+```{r, Dope_vs_NonDope}
+allSamps %>%
+  filter(Sample %in% c('1_DopedTemp', '1_nonDoped')) %>%
+  DistribUncert2() %>%
+  count(Sample, Type, Pos, wt=FracCount) %>%
+  ungroup() %>%
+  left_join(readCounts, by='Sample') %>%
+  select(., -Errs) %>%
+  # count all errors regardless of type
+  bind_rows(.,
+            count(., Sample, Reads, Pos, wt=n) %>% mutate(Type = 'A') %>% rename(n=nn)) %>%
+  mutate(
+    Norm = n / Reads,
+    Sample = if_else(Sample == '1_DopedTemp',
+                     'Error-Doped Oligo',
+                     'Standard Oligo'),
+    Type = Type %>%
+      factor(levels = c('A', 'M', 'D', 'P', 'I', 'S')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', S = 'Multiple Base Insertions',
+             M = 'Mismatches', A = 'All Errors')
+  ) %T>%
+  { # significance test and summarise for paper
+    group_by(., Sample, Type) %>%
+      summarise(med=median(Norm), mean=mean(Norm)) %>%
+      arrange(Sample) %>%
+      print();
+    group_by(., Type) %>%
+      summarise(p.val=wilcox.test(Norm ~ Sample, data=.)$p.value) %>%
+        print()
+    } %>%
+  ggplot(aes(x=Sample, y=Norm)) +
+  geom_jitter(position=position_jitter(w = 0.35)) +
+  stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, geom = 'crossbar', width = 0.75) +
+  facet_wrap(~ Type, scales='free_y', ncol=3) +
+  labs(y = 'Error Rate') +
+  theme(axis.title.x=element_blank())
+```
+
+# Misc
+## MutS Mismatch Preferences
+There's some really strange bi-modal correction of CA mismatches with MutS across both samples. Not sure what it could be...
+
+```{r, MutS_CA}
+enzPref.idm %>%
+  filter(
+    str_detect(Sample, 'MutS'),
+    Type == 'M',
+    Diff == 'CA'
+    ) %>%
+  ggplot(aes(x=Pos, y=Rel_Norm, color=Treatment)) +
+  geom_point(size=5) +
+  facet_wrap(~ Sample, ncol=2) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  theme(
+    legend.title = element_text(size=rel(2)),
+    legend.position = 'bottom'
+  ) +
+  scale_color_manual(
+    name = 'Treatment',
+    values=c("#ca0020", "#0571b0")
+  ) +
+  labs(x = 'Position', y = 'Log2-fold Error Rate Change')
+```
+
+## Aligner Comparision
+Here we will compare BBMap, Bowtie2, and our NW aligner
+```{r, aligners}
+bind_rows(
+  list(bbmap=fread('./pipeline/1_nonDoped.bbmap.csv', header=T),
+       bowtie=fread('./pipeline/1_nonDoped.bowtie.csv', header=T),
+       nw=select(nonDoped, -Sample)),
+  .id = 'Aligner'
+) %>%
+  DistribUncert2() %>%
+  count(Aligner, Pos, Type, wt=FracCount) %>%
+  ungroup() %>%
+  mutate(
+    Norm=n / subset(readCounts, Sample == '1_nonDoped')$Reads,
+    Type = Type %>%
+      factor(levels = c('M', 'I', 'D', 'P', 'S')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', S = 'Multiple Base Insertions',
+             M = 'Mismatches')) %>%
+  ggplot(aes(x=Pos, y=Norm, color=Aligner)) +
+  facet_wrap(~ Type, ncol=2, scales='free_y') +
+  geom_point() +
+  stat_smooth(se=F) +
+  theme(
+    legend.title=element_text(size=rel(2)),
+    legend.position=c(0.75, 0.15)
+  ) +
+  guides(colour = guide_legend(override.aes = list(size=5))) +
+  scale_color_discrete(name = 'Aligner',
+                       labels = c('BBMap', 'Bowtie2', 'Needleman-Wunsch')) +
+  labs(x = 'Position', y = 'Error Rate') +
+  scale_y_continuous(labels = scientific_format())
+```
+
+## Classic Table
+```{r, classic_table}
+single <- allSamps %>%
+    filter(!Type %in% c('S', 'P')) %>%
+      DistribUncert2() %>%
+      group_by(Sample, Type, Diff) %>%
+      summarise(n=sum(FracCount)) %>%
+      ungroup()
+
+# just count the number of multiple counts
+multiple <- allSamps %>%
+  filter(Type %in% c('S', 'P')) %>%
+  group_by(Sample, Type) %>%
+  summarise(n=n(), Diff='N/A') %>%
+  ungroup()
+
+# grab transitions/transversions
+trans <- single %>%
+  filter(Type == 'M') %>%
+  mutate(
+    Type= Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion')
+  ) %>%
+  group_by(Sample, Type) %>%
+  summarise(Diff='N/A', n=sum(n)) %>%
+  ungroup()
+
+bind_rows(single, multiple, trans) %>%
+  mutate(
+    Type = Type %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', S = 'Multiple Base Insertions',
+             M = 'Mismatches')
+  ) %>%
+  spread(Sample, n) %>%
+  # manual selection maddness to aid downstream processing
+  select(
+    Type, Diff,
+    `1_nonDoped`, matches('ErrASE-'), `1_DopedTemp`,
+    matches('_ErrASE'), contains("1900"), contains("950"),
+    contains("Survey"), contains("Furhmann"), `1_T7EndoI`,
+    `2_T7EndoI`, contains("e3T7"), contains("e4T7"),
+    contains("T4"), contains("EndoV")
+  ) %>%
+  write.csv('Table_1.csv', quote=FALSE, row.names=FALSE)
+```

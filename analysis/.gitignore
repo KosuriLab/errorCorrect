@@ -1,0 +1,13 @@
+*.png
+*.pptx
+*.fai
+*.RData
+*.rdx
+*.rdb
+*_cache
+*_files
+*.html
+*.Rhistory
+data/*
+pipeline/*
+output/*

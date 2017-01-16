@@ -1,0 +1,454 @@
+[
+{
+"name":"Single_Insert",
+"left":1,
+"cigar":"89M1I11M",
+"md":"30C6G7T1G1G11G1A10A9A6T8",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"==============================G======C=======G=A=T===========C=G==========C=========C====G==G========",
+"answer":[["Single_Insert",31, "M", "CG"], ["Single_Insert",38, "M", "GC"], ["Single_Insert",46, "M", "TG"], ["Single_Insert",48, "M", "GA"], ["Single_Insert",50, "M", "GT"], ["Single_Insert",62, "M", "GC"], ["Single_Insert",64, "M", "AG"], ["Single_Insert",75, "M", "AC"], ["Single_Insert",85, "M", "AC"], ["Single_Insert",90, "I", "G"], ["Single_Insert",92, "M", "TG"]]
+},
+
+{
+"name":"Big_Deletion",
+"left":1,
+"cigar":"12M4D84M",
+"md":"12^CATA9C59G14",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"=====================A===========================================================C==============",
+"answer":[["Big_Deletion",13, "P", "CATA"], ["Big_Deletion",26, "M", "CA"], ["Big_Deletion",86, "M", "GC"]]
+},
+
+
+{
+"name":"Big_Insert",
+"left":1,
+"cigar":"88M6I12M",
+"md":"1C59G38",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"=G===========================================================A==========================TTGTAT============",
+"answer":[["Big_Insert",2, "M", "CG"], ["Big_Insert",62, "M", "GA"], ["Big_Insert",89, "S", "TTGTAT"]]
+},
+
+{
+"name":"Double_Insert",
+"left":1,
+"cigar":"38M1I44M1I18M",
+"md":"27C18G8G44",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===========================A==========A========T========C==========================G==================",
+"answer":[["Double_Insert",28, "M", "CA"], ["Double_Insert",39, "I", "A"], ["Double_Insert",47, "M", "GT"], ["Double_Insert",56, "M", "GC"], ["Double_Insert",83, "I", "G"]]
+},
+
+{
+"name":"Double_Insert_Single_Del",
+"left":1,
+"cigar":"24M1I3M1D67M1I5M",
+"md":"27^C3T36G31",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"========================A======C====================================A==========================T=====",
+"answer":[["Double_Insert_Single_Del",25, "I", "A"], ["Double_Insert_Single_Del",28, "D", "C"], ["Double_Insert_Single_Del",32, "M", "TC"], ["Double_Insert_Single_Del",69, "M", "GA"], ["Double_Insert_Single_Del",96, "I", "T"]]
+},
+
+{
+"name":"Double_Del_Ins",
+"left":1,
+"cigar":"4M1D72M1I2M2D19M",
+"md":"3G0^C72C1^CG9G9",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===C========================================================================AA==========A=========",
+"answer":[["Double_Del_Ins",4, "M", "GC"], ["Double_Del_Ins",5, "D", "C"], ["Double_Del_Ins",78, "I", "A"], ["Double_Del_Ins",78, "M", "CA"], ["Double_Del_Ins",80, "P", "CG"], ["Double_Del_Ins",91, "M", "GA"]]
+},
+
+{
+"name":"Double_Del",
+"left":1,
+"cigar":"44M1D1M2D52M",
+"md":"3G6T33^A1^GG23C16T11",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===A======G=========================================================A================G===========",
+"answer":[["Double_Del",4, "M", "GA"], ["Double_Del",11, "M", "TG"], ["Double_Del",45, "D", "A"], ["Double_Del",47, "P", "GG"], ["Double_Del",72, "M", "CA"], ["Double_Del",89, "M", "TG"]]
+},
+
+{
+"name":"Triple_Del",
+"left":1,
+"cigar":"43M1D5M1D2M2D46M",
+"md":"0G42^C5^G2^TG15A10G19",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"T================================================================C==========T===================",
+"answer":[["Triple_Del",1, "M", "GT"], ["Triple_Del",44, "D", "C"], ["Triple_Del",50, "D", "G"], ["Triple_Del",53, "P", "TG"], ["Triple_Del",70, "M", "AC"], ["Triple_Del",81, "M", "GT"]]
+},
+
+{
+"name":"None!",
+"left":4,
+"cigar":"*",
+"md":"",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"CTGGCTGCCACTCCAGCCCTCCTGGCTGGGCCACGCCCCCTCGCTGGGCTCTAACGGAAGATCTTCGCTGCCTCTCC",
+"answer":null
+},
+
+{
+"name":"Insert_@100",
+"left":1,
+"cigar":"31M1I68M1I1M",
+"md":"19T4C24G0A34G2T2T8",
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"===================G====T======T==================AT==================================A==G==G=======G=",
+"answer":[["Insert_@100",20, "M", "TG"], ["Insert_@100",25, "M", "CT"], ["Insert_@100",32, "I", "T"], ["Insert_@100",50, "M", "GA"], ["Insert_@100",51, "M", "AT"], ["Insert_@100",86, "M", "GA"], ["Insert_@100",89, "M", "TG"], ["Insert_@100",92, "M", "TG"], ["Insert_@100",100, "I", "G"]]
+},
+
+{
+"name":"@Del_1",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========_===========================================================================================================",
+"left":1,
+"cigar":"8M1D107M",
+"md":"8^G107",
+"answer":[["@Del_1", 9, "D", "G"]]
+},
+{
+"name":"@Del_2",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========__==========================================================================================================",
+"left":1,
+"cigar":"8M2D106M",
+"md":"8^GC106",
+"answer":[["@Del_2", 9, "P", "GC"]]
+},
+{
+"name":"@Del_3",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========___=========================================================================================================",
+"left":1,
+"cigar":"8M3D105M",
+"md":"8^GCT105",
+"answer":[["@Del_3", 9, "P", "GCT"]]
+},
+{
+"name":"@Match_Del",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========_==========================================================================================================",
+"left":1,
+"cigar":"9M1D106M",
+"md":"9^C106",
+"answer":[["@Match_Del", 10, "D", "C"]]
+},
+{
+"name":"@Del_Match_Del",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========_=_=========================================================================================================",
+"left":1,
+"cigar":"8M1D1M1D105M",
+"md":"8^G1^T105",
+"answer":[["@Del_Match_Del", 9, "D", "G"], ["@Del_Match_Del", 11, "D", "T"]]
+},
+{
+"name":"@2Match_Del",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"==========_=========================================================================================================",
+"left":1,
+"cigar":"10M1D105M",
+"md":"10^T105",
+"answer":[["@2Match_Del", 11, "D", "T"]]
+},
+{
+"name":"@3Match_Del",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========_========================================================================================================",
+"left":1,
+"cigar":"11M1D104M",
+"md":"11^G104",
+"answer":[["@3Match_Del", 12, "D", "G"]]
+},
+{
+"name":"@Match1_Del2-3",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========__=========================================================================================================",
+"left":1,
+"cigar":"9M2D105M",
+"md":"9^CT105",
+"answer":[["@Match1_Del2-3", 10, "P", "CT"]]
+},
+{
+"name":"@Match1_Del2-4_Alt_Del3_Match97",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========___=========================================================================================================",
+"left":1,
+"cigar":"8M3D105M",
+"md":"8^GCT105",
+"answer":[["@Match1_Del2-4_Alt_Del3_Match97", 9, "P", "GCT"]]
+},
+{
+"name":"@Match1_Del2-5",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========____=======================================================================================================",
+"left":1,
+"cigar":"9M4D103M",
+"md":"9^CTGC103",
+"answer":[["@Match1_Del2-5", 10, "P", "CTGC"]]
+},
+{
+"name":"@Match2_Del3-4",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"==========__========================================================================================================",
+"left":1,
+"cigar":"10M2D104M",
+"md":"10^TG104",
+"answer":[["@Match2_Del3-4", 11, "P", "TG"]]
+},
+{
+"name":"@Match2_Del3-5_Alt_Del3_Match97",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========___=========================================================================================================",
+"left":1,
+"cigar":"8M3D105M",
+"md":"8^GCT105",
+"answer":[["@Match2_Del3-5_Alt_Del3_Match97", 9, "P", "GCT"]]
+},
+{
+"name":"@Match2_Del3-6_Alt_Match1_Del4_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========____=======================================================================================================",
+"left":1,
+"cigar":"9M4D103M",
+"md":"9^CTGC103",
+"answer":[["@Match2_Del3-6_Alt_Match1_Del4_Match", 10, "P", "CTGC"]]
+},
+{
+"name":"@Match3_Del4-5",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========__=======================================================================================================",
+"left":1,
+"cigar":"11M2D103M",
+"md":"11^GC103",
+"answer":[["@Match3_Del4-5", 12, "P", "GC"]]
+},
+{
+"name":"@Match3_Del4-6",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========___======================================================================================================",
+"left":1,
+"cigar":"11M3D102M",
+"md":"11^GCC102",
+"answer":[["@Match3_Del4-6", 12, "P", "GCC"]]
+},
+{
+"name":"@Match3_Del4-7",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========____=====================================================================================================",
+"left":1,
+"cigar":"11M4D101M",
+"md":"11^GCCG101",
+"answer":[["@Match3_Del4-7", 12, "P", "GCCG"]]
+},
+{
+"name":"@Match4_Del5-6",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"============__======================================================================================================",
+"left":1,
+"cigar":"12M2D102M",
+"md":"12^CC102",
+"answer":[["@Match4_Del5-6", 13, "P", "CC"]]
+},
+{
+"name":"@Match4_Del5-7_Alt_Match11_Del3_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========___======================================================================================================",
+"left":1,
+"cigar":"11M3D102M",
+"md":"11^GCC102",
+"answer":[["@Match4_Del5-7_Alt_Match11_Del3_Match", 12, "P", "GCC"]]
+},
+{
+"name":"@Match4_Del5-8",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"============____====================================================================================================",
+"left":1,
+"cigar":"12M4D100M",
+"md":"12^CCGA100",
+"answer":[["@Match4_Del5-8", 13, "P", "CCGA"]]
+},
+{
+"name":"@Del_1_end",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===========================================================================================================_========",
+"left":1,
+"cigar":"107M1D8M",
+"md":"107^G8",
+"answer":[["@Del_1_end", 108, "D", "G"]]
+},
+{
+"name":"@Del_2_end",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"==========================================================================================================__========",
+"left":1,
+"cigar":"106M2D8M",
+"md":"106^CG8",
+"answer":[["@Del_2_end", 107, "P", "CG"]]
+},
+{
+"name":"@Del_3_end",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========================================================================================================___========",
+"left":1,
+"cigar":"105M3D8M",
+"md":"105^TCG8",
+"answer":[["@Del_3_end", 106, "P", "TCG"]]
+},
+{
+"name":"@Del_4_end",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========================================================================================================____========",
+"left":1,
+"cigar":"104M4D8M",
+"md":"104^ATCG8",
+"answer":[["@Del_4_end", 105, "P", "ATCG"]]
+},
+{
+"name":"@Match98_Del99",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"==========================================================================================================_=========",
+"left":1,
+"cigar":"106M1D9M",
+"md":"106^C9",
+"answer":[["@Match98_Del99", 107, "D", "C"]]
+},
+{
+"name":"@Match97_Del98-99",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========================================================================================================__=========",
+"left":1,
+"cigar":"105M2D9M",
+"md":"105^TC9",
+"answer":[["@Match97_Del98-99", 106, "P", "TC"]]
+},
+{
+"name":"@Match96_Del97-99",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========================================================================================================___=========",
+"left":1,
+"cigar":"104M3D9M",
+"md":"104^ATC9",
+"answer":[["@Match96_Del97-99", 105, "P", "ATC"]]
+},
+{
+"name":"@Match95_Del96-99",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=======================================================================================================____=========",
+"left":1,
+"cigar":"103M4D9M",
+"md":"103^TATC9",
+"answer":[["@Match95_Del96-99", 104, "P", "TATC"]]
+},
+{
+"name":"@Match97_Del98",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=========================================================================================================_==========",
+"left":1,
+"cigar":"105M1D10M",
+"md":"105^T10",
+"answer":[["@Match97_Del98", 106, "D", "T"]]
+},
+{
+"name":"@Match96_Del97-98_Alt_Match91_Del2_Match_Alt_Match93_Del2_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================__===============",
+"left":1,
+"cigar":"99M2D15M",
+"md":"99^TA15",
+"answer":[["@Match96_Del97-98_Alt_Match91_Del2_Match_Alt_Match93_Del2_Match", 100, "P", "TA"]]
+},
+{
+"name":"@Match95_Del96-98",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=======================================================================================================___==========",
+"left":1,
+"cigar":"103M3D10M",
+"md":"103^TAT10",
+"answer":[["@Match95_Del96-98", 104, "P", "TAT"]]
+},
+{
+"name":"@Match94_Del95-98_Alt_Match91_Del4_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================____=============",
+"left":1,
+"cigar":"99M4D13M",
+"md":"99^TATA13",
+"answer":[["@Match94_Del95-98_Alt_Match91_Del4_Match", 100, "P", "TATA"]]
+},
+{
+"name":"@Match96_Del97",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"========================================================================================================_===========",
+"left":1,
+"cigar":"104M1D11M04^A1",
+"md":"104^A11",
+"answer":[["@Match96_Del97", 105, "D", "A"]]
+},
+{
+"name":"@Match95_Del96-97_Alt_Match91_Del2_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================__===============",
+"left":1,
+"cigar":"99M2D15M",
+"md":"99^TA15",
+"answer":[["@Match95_Del96-97_Alt_Match91_Del2_Match", 100, "P", "TA"]]
+},
+{
+"name":"@Match94_Del95-97",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"======================================================================================================___===========",
+"left":1,
+"cigar":"102M3D11M",
+"md":"102^ATA11",
+"answer":[["@Match94_Del95-97", 103, "P", "ATA"]]
+},
+{
+"name":"@Match93_Del94-97_Alt_Match91_Del4_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================____=============",
+"left":1,
+"cigar":"99M4D13M",
+"md":"99^TATA13",
+"answer":[["@Match93_Del94-97_Alt_Match91_Del4_Match", 100, "P", "TATA"]]
+},
+{
+"name":"@Match95_Del96",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=======================================================================================================_============",
+"left":1,
+"cigar":"103M1D12M",
+"md":"103^T12",
+"answer":[["@Match95_Del96", 104, "D", "T"]]
+},
+{
+"name":"@Match94_Del95-96_Alt_Match91_Del2_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================__===============",
+"left":1,
+"cigar":"99M2D15M",
+"md":"99^TA15",
+"answer":[["@Match94_Del95-96_Alt_Match91_Del2_Match", 100, "P", "TA"]]
+},
+{
+"name":"@Match93_Del94-96",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"=====================================================================================================___============",
+"left":1,
+"cigar":"101M3D12M",
+"md":"101^TAT12",
+"answer":[["@Match93_Del94-96", 102, "P", "TAT"]]
+},
+{
+"name":"@Match92_Del93-96_Alt_Match91_Del4_Match",
+"ref":"GGGGAAAAGCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCGAAAAGGGG",
+"diff":"===================================================================================================____=============",
+"left":1,
+"cigar":"99M4D13M",
+"md":"99^TATA13",
+"answer":[["@Match92_Del93-96_Alt_Match91_Del4_Match", 100, "P", "TATA"]]
+}
+]

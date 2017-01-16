@@ -1,0 +1,10 @@
+[
+{
+"name":"Right",
+"left":1,
+"ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+"diff":"========A=================================================================G=======================",
+"raw_list":[[8, "M", "TA"], [74, "M", "AG"]],
+"answer":[[8, "M", "TA"], [74, "M", "AG"], [98, "R", "CG"]]
+}
+]

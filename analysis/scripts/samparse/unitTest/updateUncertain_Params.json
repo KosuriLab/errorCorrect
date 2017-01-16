@@ -1,0 +1,129 @@
+[
+{
+    "name":"Single_Insert",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 31, "M", "CG"], ["test", 38, "M", "GC"], ["test", 46, "M", "TG"], ["test", 48, "M", "GA"], ["test", 50, "M", "GT"], ["test", 62, "M", "GC"], ["test", 64, "M", "AG"], ["test", 75, "M", "AC"], ["test", 85, "M", "AC"], ["test", 90, "I", "G"], ["test", 92, "M", "TG"]],
+    "answer":[["test", 31, "M", "CG"], ["test", 38, "M", "GC"], ["test", 46, "M", "TG"], ["test", 48, "M", "GA"], ["test", 50, "M", "GT"], ["test", 62, "M", "GC"], ["test", 64, "M", "AG"], ["test", 75, "M", "AC"], ["test", 85, "M", "AC"], ["test", 89, "UI", "2G"], ["test", 90, "UI", "2G"], ["test", 92, "M", "TG"]]
+},
+
+{
+    "name":"Big_Deletion",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 13, "P", "CATA"], ["test", 26, "M", "CA"], ["test", 86, "M", "GC"]],
+    "answer":[["test", 13, "P", "CATA"], ["test", 26, "M", "CA"], ["test", 86, "M", "GC"]]
+},
+
+{
+    "name":"Right_Align",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 12, "M", "CG"], ["test", 13, "M", "CA"], ["test", 26, "M", "CG"], ["test", 34, "M", "CA"], ["test", 36, "M", "AC"], ["test", 44, "M", "CT"], ["test", 83, "M", "GA"], ["test", 92, "M", "TA"], ["test", 93, "R", "ATATATCG"]],
+    "answer":[["test", 12, "M", "CG"], ["test", 13, "M", "CA"], ["test", 26, "M", "CG"], ["test", 34, "M", "CA"], ["test", 36, "M", "AC"], ["test", 44, "M", "CT"], ["test", 83, "M", "GA"], ["test", 92, "M", "TA"], ["test", 93, "R", "ATATATCG"]]
+},
+
+{
+    "name":"Left_Align",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 12, "L", "GCTGCCGATTTC"], ["test", 13, "M", "CG"], ["test", 14, "M", "AC"], ["test", 17, "I", "C"], ["test", 17, "M", "AC"], ["test", 67, "M", "TA"], ["test", 87, "M", "TG"], ["test", 92, "M", "TA"]],
+    "answer":[["test", 12, "L", "GCTGCCGATTTC"], ["test", 13, "M", "CG"], ["test", 14, "M", "AC"], ["test", 16, "UI", "2C"], ["test", 17, "M", "AC"], ["test", 17, "UI", "2C"], ["test", 67, "M", "TA"], ["test", 87, "M", "TG"], ["test", 92, "M", "TA"]]
+},
+
+
+{
+    "name":"Big_Insert",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 2, "M", "CG"], ["test", 62, "M", "GA"], ["test", 89, "S", "TTGTAT"]],
+    "answer":[["test", 2, "M", "CG"], ["test", 62, "M", "GA"], ["test", 89, "S", "TTGTAT"]]
+},
+
+{
+    "name":"Double_Insert",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 28, "M", "CA"], ["test", 39, "I", "A"], ["test", 47, "M", "GT"], ["test", 56, "M", "GC"], ["test", 83, "I", "G"]],
+    "answer":[["test", 28, "M", "CA"], ["test", 39, "UI", "2A"], ["test", 40, "UI", "2A"], ["test", 47, "M", "GT"], ["test", 56, "M", "GC"], ["test", 83, "I", "G"]]
+},
+
+{
+    "name":"Double_Insert_Single_Del",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 25, "I", "A"], ["test", 28, "D", "C"], ["test", 32, "M", "TC"], ["test", 69, "M", "GA"], ["test", 96, "I", "T"]],
+    "answer":[["test", 25, "UI", "2A"], ["test", 26, "UI", "2A"], ["test", 28, "D", "C"], ["test", 32, "M", "TC"], ["test", 69, "M", "GA"], ["test", 96, "I", "T"]]
+},
+
+{
+    "name":"Double_Del_Ins",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 4, "M", "GC"], ["test", 5, "D", "C"], ["test", 78, "I", "A"], ["test", 78, "M", "CA"], ["test", 80, "P", "CG"], ["test", 91, "M", "GA"]],
+    "answer":[["test", 4, "M", "GC"], ["test", 5, "UD", "2C"], ["test", 6, "UD", "2C"], ["test", 77, "UI", "2A"], ["test", 78, "M", "CA"], ["test", 78, "UI", "2A"], ["test", 80, "P", "CG"], ["test", 91, "M", "GA"]]
+},
+
+{
+    "name":"Double_Del",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 4, "M", "GA"], ["test", 11, "M", "TG"], ["test", 45, "D", "A"], ["test", 47, "P", "GG"], ["test", 72, "M", "CA"], ["test", 89, "M", "TG"]],
+    "answer":[["test", 4, "M", "GA"], ["test", 11, "M", "TG"], ["test", 45, "D", "A"], ["test", 47, "P", "GG"], ["test", 72, "M", "CA"], ["test", 89, "M", "TG"]]
+},
+
+{
+    "name":"Triple_Del",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 1, "M", "GT"], ["test", 44, "D", "C"], ["test", 50, "D", "G"], ["test", 53, "P", "TG"], ["test", 70, "M", "AC"], ["test", 81, "M", "GT"]],
+    "answer":[["test", 1, "M", "GT"], ["test", 44, "D", "C"], ["test", 50, "D", "G"], ["test", 53, "P", "TG"], ["test", 70, "M", "AC"], ["test", 81, "M", "GT"]]
+},
+
+{
+    "name":"Insert_And_Bowtie_Right",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 22, "I", "C"], ["test", 52, "M", "AT"], ["test", 82, "M", "AG"], ["test", 84, "M", "CT"], ["test", 101, "I", "A"]],
+    "answer":[["test", 22, "UI", "2C"], ["test", 23, "UI", "2C"], ["test", 52, "M", "AT"], ["test", 82, "M", "AG"], ["test", 84, "M", "CT"], ["test", 101, "I", "A"]]
+},
+
+{
+    "name":"Bowtie_Right",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 5, "M", "CT"], ["test", 30, "M", "TA"], ["test", 59, "M", "AC"], ["test", 92, "M", "TC"], ["test", 101, "I", "A"]],
+    "answer":[["test", 5, "M", "CT"], ["test", 30, "M", "TA"], ["test", 59, "M", "AC"], ["test", 92, "M", "TC"], ["test", 101, "I", "A"]]
+},
+
+{
+    "name":"Bowtie_Right_MM",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 24, "M", "TG"], ["test", 46, "M", "TA"], ["test", 100, "M", "GA"], ["test", 101, "I", "A"]],
+    "answer":[["test", 24, "M", "TG"], ["test", 46, "M", "TA"], ["test", 100, "M", "GA"], ["test", 101, "I", "A"]]
+},
+
+{
+    "name":"Bowtie_Left",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 1, "I", "T"]],
+    "answer":[["test", 1, "I", "T"]]
+},
+
+{
+    "name":"Bowtie_Left_MM",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 1, "I", "A"], ["test", 1, "M", "GC"], ["test", 24, "M","TG"], ["test", 83, "M", "GT"]],
+    "answer":[["test", 1, "I", "A"], ["test", 1, "M", "GC"], ["test", 24, "M","TG"], ["test", 83, "M", "GT"]]
+},
+
+{
+    "name":"Left_Right_Align",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 3, "L", "GCT"], ["test", 34, "M", "CT"], ["test", 98, "R", "TCG"]],
+    "answer":[["test", 3, "L", "GCT"], ["test", 34, "M", "CT"], ["test", 98, "R", "TCG"]]
+},
+
+{
+    "name":"Insert_@100",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 20, "M", "TG"], ["test", 25, "M", "CT"], ["test", 32, "I", "T"], ["test", 50, "M", "GA"], ["test", 51, "M", "AT"], ["test", 86, "M", "GA"], ["test", 89, "M", "TG"], ["test", 92, "M", "TG"], ["test", 100, "I", "G"]],
+    "answer":[["test", 20, "M", "TG"], ["test", 25, "M", "CT"], ["test", 32, "I", "T"], ["test", 50, "M", "GA"], ["test", 51, "M", "AT"], ["test", 86, "M", "GA"], ["test", 89, "M", "TG"], ["test", 92, "M", "TG"], ["test", 100, "I", "G"]]
+},
+
+{
+    "name":"AA_TT_Mismatch",
+    "ref":"GCTGCCGATTTCCATAAGATGCCTCCACGTCTCCGAAGAACTACATGGTGAATGTGTGAAGGCATTTTGAACCAATCCTCGAGCAGTGTTGTATATATCG",
+    "canon":[["test", 1, "I", "T"], ["test", 19, "M", "AC"], ["test", 30, "M", "TA"], ["test", 37, "M", "AT"], ["test", 38, "M", "GT"], ["test", 48, "M", "GC"], ["test", 78, "M", "CA"], ["test", 80, "M", "CA"], ["test", 91, "M", "GC"], ["test", 96, "M", "TC"], ["test", 98, "M", "TC"]],
+    "answer":[["test", 1, "I", "T"], ["test", 19, "M", "AC"], ["test", 30, "M", "TA"], ["test", 37, "M", "AT"], ["test", 38, "M", "GT"],
+              ["test", 48, "M", "GC"], ["test", 78, "M", "CA"], ["test", 80, "M", "CA"], ["test", 91, "M", "GC"], ["test", 96, "M", "TC"], ["test", 98, "M", "TC"]]
+}
+]
