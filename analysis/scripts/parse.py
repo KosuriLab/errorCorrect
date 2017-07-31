@@ -7,6 +7,13 @@ TODO:
     * Parse file extensions to automatically read fasta/fastq
     * Exit gracefully on KeyboardInterrupt
 """
+
+# Ensure Python 2/3 compatibility
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+#from __future__ import unicode_literals
+
 import re
 import itertools
 import argparse
@@ -38,26 +45,25 @@ def flatten(listOfLists):
 #===============================================================================
 # I/O Functions
 
-
-def fastaReader(path):
+def fasta_reader(fasta):
     """
     Read in a fasta file lazily and return a generator of the name and sequence
 
     Parameters:
     -----------
-    path :: str
-        path to fasta file
+    fasta :: FileType
+        opened file
 
-    Returns:
-    --------
+    Yields:
+    -------
     generator :: (name, seq)
         name :: str
             Name of the read taken from the fasta file
-        seq :: str
+        read :: str
             Sequence taken from the fasta file
 
-    Dependencies:
-    -------------
+    Requires:
+    ---------
     itertools
 
     Example:
@@ -75,31 +81,27 @@ def fastaReader(path):
     -----
     Adapted from: https://www.biostars.org/p/710/#1412
     """
-    with open(path, 'r') as fp:
-        # ditch the boolean (x[0]) and just keep the header/seq grouping
-        fa_iter = (x[1] for x in itertools.groupby(fp, lambda line: line[0] == ">"))
-        for header in fa_iter:
-            # drop the ">"
-            name = header.next()[1:].strip()
-            # join all sequence lines to one by iterating until the next group.
-            seq = "".join(s.strip() for s in fa_iter.next())
-            yield name, seq
+    # ditch the boolean (x[0]) and just keep the header/seq grouping
+    fa_iter = (x[1] for x in itertools.groupby(fasta, lambda line: line[0] == ">"))
+    for header in fa_iter:
+        # drop the ">"
+        name = next(header)[1:].strip()
+        # join all sequence lines to one by iterating until the next group.
+        read = "".join(s.strip() for s in next(fa_iter))
+        yield name, read
 
 
-#-------------------------------------------------------------------------------
-
-
-def fastqReader(path):
+def fastq_reader(fastq):
     """
     Read in a fastq file laizy and return a generator of the name and sequence
 
     Parameters:
     -----------
-    path :: str
-        path to fasta file
+    fastq :: FileType
+        opened fastq file
 
-    Returns:
-    --------
+    Yields:
+    -------
     generator :: (name, seq)
         name :: str
             Name of the read taken from the fasta file
@@ -110,12 +112,14 @@ def fastqReader(path):
     -------------
     grouper - see itertools recepies
     """
-    with open(path, 'r') as fp:
-        group_gen = grouper(fp, 4)
-        for record in group_gen:
-            name = record[0].split(' ')[0][1:].strip()
-            seq = record[1].strip()
-            yield name, seq
+    group_gen = grouper(fastq, 4)
+    for record in group_gen:
+        # drop the @ before the name and any text after a whitespace
+        name = record[0].split(' ')[0][1:].strip()
+        seq = record[1].strip()
+        yield name, seq
+
+
 
 
 #===============================================================================
@@ -379,9 +383,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
             description='Process input and output as a csv')
     parser.add_argument('ref_fasta',
-            help='path to a *.fasta file of the reference sequence')
+            type=argparse.FileType('r'),
+            help='path to a *.fastA file of the reference sequence')
     parser.add_argument('query',
-            help='file of queries')
+            type=argparse.FileType('r'),
+            default=sys.stdin,
+            nargs='?',
+            help='path to a *.fastQ file of the reads (or stdin if none)')
     parser.add_argument('-p',
             '--proc',
             dest='proc',
@@ -428,6 +436,11 @@ if __name__ == '__main__':
             default=-6,
             metavar='N',
             help='gap extend penalty (default=-6)')
+    parser.add_argument('-fa',
+            '--fasta',
+            dest='fasta',
+            action='store_true',
+            help='process query as fasta file')
     args = parser.parse_args()
 
     # Make sure that the score values are all within a valid range
@@ -441,13 +454,13 @@ if __name__ == '__main__':
         raise ValueError('Gap open penalty must be less than or equal to gap extend penalty!')
 
     # process input
-    ref = list(next(fastaReader(args.ref_fasta)))[1]
+    ref = next(fasta_reader(args.ref_fasta))[1]
 
     # check for fasta/fastq query (hackish and brittle...)
-    if args.query.split('.')[-1] == 'fasta':
-        query_gen = fastaReader(args.query)
+    if args.fasta:
+        query_gen = fasta_reader(args.query)
     else:
-        query_gen = fastqReader(args.query)
+        query_gen = fastq_reader(args.query)
 
     # pack everything into a neat generator
     score_dict = {'match_score':args.match, 'mismatch_score':args.mismatch,

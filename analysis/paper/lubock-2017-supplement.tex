@@ -44,6 +44,17 @@
 \title{Supplementary Information}
 \maketitle
 
+\section*{Analysis of a Two Oligo Assembly}
+We applied our pipeline to quantify the different types of errors found in our two-oligo assembly of standard (not error doped) oligos (Figure S3). We find that on average about one-third of assemblies contain errors, with an overall error frequency of approximately 4.3 errors per kb. We find that mismatches account for the majority of errors ($\sim$75\%), followed by single ($\sim$14\%) and multiple-base deletions ($\sim$8\%) (Figure S3A). The mismatches segregate into two significantly different populations, with the median error rate per base being higher at A’s (4.33$\times 10^{-3}$) and T’s (4.25$\times 10^{-3}$) than at G’s (1.68$\times 10^{-3}$) and C’s (1.91$\times 10^{-3}$) (Figures SB, C; Mann-Whitney U, $p<<0.001$, Holm-corrected). Furthermore, we find that the median rate of transitions was significantly higher than that of transversions for each base (Figures 2C; Mann-Whitney U, $p<<0.001$, Holm-corrected). All of these observations indicate that much of the mismatch error rate is due to polymerase misincorporation during the amplification steps for assembly and sample-preparation for sequencing. Specifically, we used the Taq-based KAPA SYBR Fast polymerase during next-generation sequencing library preparation steps. Consistent with our observations, misincorporations caused by Taq occur most often at A’s and T’s, and are preferentially A/T $\to$ G/C transitions (49–52). However, we cannot completely rule out the effect of errors in the oligo synthesis as our error frequency of 4.3 errors per kb is higher than the $\sim$3 error/kb expected from 50 rounds of amplification at previously reported Taq error rates (52–54).
+
+Next, we quantified the rates of single- and multiple-base deletions. We find that the median single-base deletion rate per position (5.64$\times 10^{-4}$), and that this rate did not vary significantly over the positions (Mann-Whitney U, NS). We also find that multiple-base deletions occur at a similar rate as single-base deletions (3.35$\times 10^{-4}$), and measure positional effects for where they occur. Some of this dependence can be explained by the fact that the positions of multiple-base deletions are mapped to the left-most deleted base. Thus, we expect the total number of multiple-base deletions to be highest at position one and decreasing after, since there are the most possible combinations of multiple-base deletions at that position. In addition, we measure a significant decrease in the median multiple-base deletion rate in the annealing region (positions 36-64) of our assembly (Mann-Whitney U, $p<<0.001$). Large deletions in this region would disrupt the hybridization of the initial assembly, leading to sequence drop-outs and a decrease in the measured number of deletions. We also expect the multiple deletion rate to drop towards the end of the sequence due to a “TATATAT” motif at positions 92-98. Any “TA” deletion (or other substring contained multiple times in the motif) will map to the left-most position, 92.
+
+Finally, we quantified single-base insertions. These errors occur at median rate per position of 9.65$\times 10^{-5}$) and exhibit no positional dependence besides an outlier at position 1. An incomplete primer trimming by \texttt{BBDuk
+} can explain this outlier. Here, 57 of the 152 single-base insertions are a “T,” corresponding to the last base of the primer sequence directly upstream of our first base. Without these 57 bases, the rate of single-base insertions falls closer to the expected median value. Our method is also able to detect multiple-base insertions, which occur at a median rate of 6.16$\times 10^{-6}$), but we omit them from the Figure 2A due to their rarity.
+
+
+\clearpage
+\section*{Supplementary Figures}
 \begin{figure*}[!ht]
 \centering
 \includegraphics[width=174mm]{aligners-1.pdf}
@@ -60,7 +71,7 @@
 \clearpage
 \begin{figure*}[t]
 \centering
-\includegraphics[width=174mm]{doped_analysis-1.pdf}
+\includegraphics[width=174mm]{Figure_2-1.pdf}
 \caption{\small \textbf{In-depth analysis of error-doped assemblies.} Here, we find no significant difference in the median mismatch rate of all four bases, median transition or transversion rate, or rate of single-base deletions for each base (all tests were Mann-Whitney U, NS, Holm-corrected). \textbf{Note:} here we performed the same analysis as Figure 2 in the main text with the error-doped assembly.}
 \end{figure*}
 
@@ -93,9 +104,24 @@
 \end{figure*}
 
 \clearpage
-\begin{sidewaystable*}[!t]
+\begin{figure*}[t]
+\centering
+\includegraphics[width=174mm]{corrs-1.pdf}
+\caption{\small \textbf{Correlations between error rates for five-oligo assembly technical replicates.} We see that technical replicates are almost perfectly correlated (all $r > 0.995$), with the black line being $y = x$.}
+\end{figure*}
+
+\clearpage
+\begin{figure*}[t]
+\centering
+\includegraphics[width=174mm]{review-errs-pos-1.pdf}
+\caption{\small \textbf{Positional error rate distributions two assemblies using KAPA2G Robust and Q5 polymerase.} We see that KAPA2G Robust, a Taq-based low-fidelity polymerase, incorporates Mismatches (MM) at nearly two-orders of magnitude higher than Q5, a high-fidelity polymerase. We find that both polymerases incorporate single base deletions (Del.), multiple base deletions (M. Del.), single base insertions (Ins.), and multiple base insertions (M. Ins.) at nearly identical rates. With the exception of multiple base insertions, these trends are robust to the different sequence contexts of the two constructs. We note that KAPA2G Robust incorporates a higher number of multiple base insertions around three tandem GGA repeats, likely due to polymerase slippage.}
+\end{figure*}
+
+\clearpage
+\begin{table*}[!t]
 \centering
 \caption{\textbf{Examples of where various aligners fail.} Here \texttt{\_} are padding for visualization, \texttt{*} are soft-trimming, and lower-case bases are inserts.}
+{\small
 \texttt{
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -120,7 +146,25 @@ Reference: & ...TGTTGTATATAT\_\_CG  & ...TGTTGTATATA\_\_TCG  & ...TGTTGTATATA\_\
 Read:      & ...TGTTGTATATATgtCG    & ...TGTTGTATATATgtCG    & ...TGTTGTATATATgtCG      & ...TGTTGTATATATgt**    \\ \bottomrule
 \end{tabular}
 }
-\end{sidewaystable*}
+}
+\end{table*}
+
+\clearpage
+\begin{table}[]
+\centering
+\caption{\textbf{Median error rate per position for assemblies using the error-doped oligos or the standard oligos.} We measure significant (Mann-Whitney U, $p << 0.001$) differences between the median error rates of the error-doped and standard oligos for all error sub-types.}
+\label{my-label}
+\begin{tabular}{@{}rcc@{}}
+\toprule
+Type                     & Error-Doped Oligo & Standard Oligo \\ \midrule
+All Errors               & $4.38 \times 10^{-2}$          & $4.18 \times 10^{-3}$       \\
+Mismatches               & $3.99 \times 10^{-2}$          & $3.08 \times 10^{-3}$       \\
+Single Base Deletions    & $1.28 \times 10^{-3}$          & $5.64 \times 10^{-4}$       \\
+Multiple Base Deletions  & $1.17 \times 10^{-3}$          & $3.35 \times 10^{-4}$       \\
+Single Base Insertions   & $7.64 \times 10^{-4}$          & $9.65 \times 10^{-5}$       \\
+Multiple Base Insertions & $6.16 \times 10^{-4}$          & $6.16 \times 10^{-6}$       \\ \bottomrule
+\end{tabular}
+\end{table}
 
 \end{document}
 

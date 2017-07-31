@@ -1,7 +1,7 @@
 ---
-title: "Enzmatic Error Correction Figures"
+title: "Enzymatic Error Correction Figures"
 author: "Nathan Lubock"
-date: "January, 2016"
+date: "January, 2017"
 output: pdf_document
 css: scroll.css
 ---
@@ -152,26 +152,49 @@ refCounts <- data.table(
             str_count(ref.seq, 'N'))
   )
 
-# set working directory here for local dev
-# setwd('/FOO/BAR/BAZ')
+# requisite information for all treatments
+# setwd("~/Projects/errorCorrect-dev/analysis/")
+charCounts <- fread('zcat ./output/char-counts.txt.gz', header=T)
+data <- fread('zcat ./output/errs-all-samples.csv.gz', header=T)
+allSamps <- data %>%
+  filter(str_sub(Sample, 1, 1) %in% c('1', '2'))
+
+# setwd("~/Dropbox/UCLA/Kosuri/ErrorCorrect/github/errorCorrect/analysis/")
+# charCounts <- fread('./data/output/char-counts.txt', header=T)
+# data <- fread('./data/output/errs-all-samples.csv', header=T)
+# allSamps <- data %>%
+#   filter(str_sub(Sample, 1, 1) %in% c('1', '2'))
 
 # constants for all samples
 readCounts <- fread('./output/read-counts.txt', header=T)
-
-# requisite information for all treatments
-charCounts <- fread('zcat ./output/char-counts.txt.gz', header=T)
-allSamps <- fread('zcat ./output/errs-all-samples.csv.gz', header=T)
-
-# the zcat trick above may not work on your machine...
-# charCounts <- fread('./output/char-counts.txt', header=T)
-# allSamps <- fread('./output/errs-all-samples.csv', header=T)
 
 # subset variables for easy running
 nonDoped <- allSamps %>% filter(Sample == '1_nonDoped')
 doped <- allSamps %>% filter(Sample == '1_DopedTemp')
 ```
 
+### Review Setup
+```{r, review-setup}
+c2 <- 'GGGTCACGCGTAGGACATTACTCTACGGTAAGGCGACATATGGCCAGATTAATTCCCAGTGTCGTCTAAGCGGTCTATCATAAATCGTGGATGGAGGAGGAGTGTCTCGGGCCATCCTGGTTCTTGTCGACTCCATGTCATGAAATGAAGCCCACTACTGTCTTGTTGTGATGGGAGTCACCATGTTCCAGCTGTGTCTTTAACCGTGTGGCTGCGGAAC'
+c3 <- 'GGTCGAGCCGGAACTGATGACGATGGCTAAATACATGTATAATGGTACATCCCTAGCAGGCATGCCCGCTTGGTCACGTGAGTAGCCCACGATATCGTTTAGAGGTAGTATAAGGGTATGCTCAGCTGCTCACTGGTATATCAGTCAGACCTACATTACCGAACTTGATGTGGCAGTCTGACCCAACTGTCCTTGCGTTGACGATTCTGGGTGCGCATCC'
 
+review.samples <- c(
+  'C2-Q5-1', 'C2-Q5-2', 'C3-Q5-1', 'C3-Q5-2',
+  'C2-Taq-1', 'C2-Taq-2', 'C3-Taq-1', 'C3-Taq-2')
+
+review.counts <- refCounts <- data.table(
+  Char = rep(c('A', 'T', 'G', 'C'), 2),
+  Construct = c(rep('C2', 4), rep('C3', 4)),
+  Count = c(str_count(c2, 'A'), str_count(c2, 'T'), str_count(c2, 'G'), str_count(c2, 'C'),
+            str_count(c3, 'A'), str_count(c3, 'T'), str_count(c3, 'G'), str_count(c3, 'C'))
+)
+
+review <- data %>%
+  filter(Sample %in% review.samples)
+
+# free up ram
+rm(data)
+```
 
 
 # Main Figures
@@ -351,7 +374,6 @@ nonDoped %>%
   {wilcox.test(Norm ~ Region, data=.) %>% print} %>%
   group_by(Region) %>%
   summarise(med=median(Norm), IQR=IQR(Norm))
-
 ```
 
 
@@ -361,8 +383,9 @@ nonDoped %>%
 # join with the length of every read and fill in perfects with a 0 count
 # errRate calculation from Furhman paper
 errRates <- allSamps %>%
-  count(Sample, Name) %>%
-  left_join(charCounts, ., by = c('Sample', 'Name')) %>%
+  DistribUncert2() %>%
+  count(Sample, Name, wt=FracCount) %>%
+  left_join(charCounts %>% filter(!Sample %in% review.samples), ., by = c('Sample', 'Name')) %>%
   replace_na(list(n=0)) %>%
   group_by(Sample) %>%
   summarise(
@@ -497,7 +520,6 @@ enzPref.idm <- allSamps %>%
              `T7EndoI-e3T7Ligase`='T7 EndoI (1e3U T7 Lig.)',
              `T7EndoI-e4T7Ligase`='T7 EndoI (1e4U T7 Lig.)',
              `ErrASE-nonDoped` = 'Standard Oligo (ErrASE)')
-
   )
 ```
 
@@ -1072,8 +1094,8 @@ doped %>%
   DistribUncert2() %>%
   count(Sample, Name, Type, wt=FracCount) %>%
   left_join(
-            filter(charCounts, Sample == '1_DopedTemp'),
-            by=c('Sample', 'Name')
+    filter(charCounts, Sample == '1_DopedTemp'),
+    by=c('Sample', 'Name')
   ) %>%
   group_by(Type) %>%
   summarise(m=sum(n/Len)/filter(readCounts, Sample == '1_DopedTemp')$Reads)
@@ -1122,7 +1144,7 @@ allSamps %>%
 
 # Misc
 ## MutS Mismatch Preferences
-There's some really strange bi-modal correction of CA mismatches with MutS across both samples. Not sure what it could be...
+There's some really strange bi-modal correction of CA mismatches with MutS across both samples. Could be guanine oxidization as suggested by Potapov 2017.
 
 ```{r, MutS_CA}
 enzPref.idm %>%
@@ -1228,4 +1250,481 @@ bind_rows(single, multiple, trans) %>%
     contains("T4"), contains("EndoV")
   ) %>%
   write.csv('Table_1.csv', quote=FALSE, row.names=FALSE)
+```
+
+# Review
+## Figure 6
+### Error Rates
+```{r, review-error-rates}
+review.errRate <- review %>%
+  DistribUncert2() %>%
+  count(Sample, Name, wt=FracCount) %>%
+  left_join(charCounts %>% filter(Sample %in% review.samples), ., by = c('Sample', 'Name')) %>%
+  replace_na(list(n=0)) %>%
+  group_by(Sample) %>%
+  summarise(
+    errRate = mean(n * (1000/Len)),
+    sem = sd(n*(1000/Len)) / sqrt(n())
+  ) %>%
+  left_join(readCounts, by='Sample') %>%
+  mutate(
+    PercentPerf = (Reads - Errs) / Reads * 100,
+    Construct = str_extract(Sample, "C([023])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  group_by(Polymerase, Construct) %>%
+  summarise(
+    `Error / kb` = mean(errRate),
+    `Percent Perfect` = mean(PercentPerf)
+    # SEM = mean(sem),
+    # PP_SEM = sd(PercentPerf) / n()
+  ) %>%
+  ungroup() %>%
+  gather(Metric, Value, -Polymerase, -Construct)
+```
+
+```{r, review-error-rates-plot}
+review.errRate.plot <- review.errRate %>%
+  # pretty print for fig
+  mutate(
+    Construct = if_else(Construct == 'C3', 'C1', 'C2'),
+    Polymerase = if_else(Polymerase == 'Q5', 'Q5', 'KAPA2G Robust')
+  ) %>%
+  ggplot(aes(x=Construct, y=Value, fill = Polymerase)) +
+  geom_bar(stat='identity', position = 'dodge') +
+  facet_wrap(~ Metric, scales = 'free_y') +
+  scale_fill_manual(
+    name = 'Polymerase',
+    values = c('#d8b365','#5ab4ac')
+  ) +
+  theme(
+    legend.position = 'bottom',
+    plot.title = element_text(size = rel(2)),
+    axis.title.y = element_blank()
+  ) +
+  labs(title = 'Assembly Qualtiy vs. Polymerase')
+```
+
+### Mismatch Sub-Type Preference
+```{r, review-mm-subtype}
+review.mm.subtype <- review %>%
+  filter(Type == 'M') %>%
+  count(Sample, Pos, Diff) %>%
+  ungroup() %>%
+  mutate(
+    Char=str_sub(Diff, 1, 1),
+    Construct = str_extract(Sample, "C([23])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$"),
+    Class=Diff %>%
+      recode(AT='Transversion', AG='Transition', AC='Transversion',
+             TA='Transversion', TG='Transversion', TC='Transition',
+             GA='Transition', GT='Transversion', GC='Transversion',
+             CA='Transversion', CT='Transition', CG='Transversion')
+  ) %>%
+  inner_join(review.counts, by = c('Construct', 'Char')) %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  group_by(Construct, Polymerase, Diff, Pos) %>%
+  summarise(
+    Norm = mean(n / Count / Reads),
+    Class = Class
+  ) %>%
+  ungroup()
+```
+
+```{r, review-mm-subtype-plot}
+review.subtype.plot <- review.mm.subtype %>%
+  # pretty print for fig
+  mutate(
+    Construct = if_else(Construct == 'C3', 'C1', 'C2'),
+    Polymerase = if_else(Polymerase == 'Q5', 'Q5', 'KAPA2G Robust')
+  ) %>%
+  ggplot(aes(x=Diff, y=Norm, color=Class)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(position = position_jitter(w=0.3), size = 0.5, alpha = 0.8) +
+  facet_grid(Construct ~ Polymerase) +
+  scale_y_log10() +
+  annotation_logticks(sides = 'l') +
+  scale_color_manual(values = c('#7b3294', '#008837')) +
+  # guides(colour = guide_legend(override.aes = list(size=5))) +
+  theme(
+    legend.position = 'bottom',
+    axis.text.x = element_text(size = rel(0.75))
+  ) +
+  labs(
+    y = 'Error Rate',
+    title = 'Mismatch Sub-types per Pos.'
+  )
+
+# test transitions vs transversions
+review.mm.subtype %>%
+  group_by(Construct, Polymerase) %>%
+  do(tidy(wilcox.test(Norm ~ Class, data=.))) %>%
+  select(-method)
+
+review.mm.subtype %>%
+  group_by(Polymerase, Class, Construct) %>%
+  summarise(Median = median(Norm)) %>%
+  summarise(Mean = mean(Median))
+
+# test Q5 C/G -> A/T vs transitions
+review.mm.subtype %>%
+  filter(Class == 'Transition' | Diff %in% c('CA', 'GT')) %>%
+  mutate(Class = if_else(Class == 'Transversion', 'C/G -> A/T', Class)) %>%
+  group_by(Construct, Polymerase, Class) %>%
+  summarise(Med = median(Norm), N = n())
+
+review.mm.subtype %>%
+  filter(Class == 'Transition' | Diff %in% c('CA', 'GT')) %>%
+  mutate(Class = if_else(Class == 'Transversion', 'C/G -> A/T', Class)) %>%
+  group_by(Construct, Polymerase) %>%
+  do(tidy(wilcox.test(Norm ~ Class, data=.))) %>%
+  select(-method)
+```
+
+### Overlap Effects
+Are the decreases in multiple base deletions in the overlaps real?
+
+```{r, review-overlaps}
+overlaps <- c(seq(41, 60), seq(81, 100), seq(121, 140), seq(161, 180))
+primers <- c(seq(1, 15), seq(206, 220))
+
+overlap.data <- review %>%
+  filter(Type == 'P') %>%
+  count(Sample, Pos) %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Construct = str_extract(Sample, "C([23])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  group_by(Construct, Polymerase, Pos) %>%
+  summarise(Norm = mean(n / Reads)) %>%
+  ungroup() %>%
+  mutate(
+    Overlap = case_when(Pos %in% primers ~ 'Primers',
+                        Pos %in% overlaps ~ 'Overlaps',
+                        TRUE ~ 'Other')
+  )
+```
+
+```{r, review-overlap-plot}
+overlap.plot <- overlap.data %>%
+  # better naming for figure
+  mutate(
+    Construct = if_else(Construct == 'C3', 'C1', 'C2'),
+    Polymerase = if_else(Polymerase == 'Q5', 'Q5', 'KAPA2G Robust')
+  ) %>%
+  ggplot(aes(x = Overlap, y = Norm, color=Polymerase)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(position = position_jitterdodge(), size = 0.5, alpha = 0.8) +
+  facet_wrap(~ Construct) +
+  scale_y_log10() +
+  annotation_logticks(sides = 'l') +
+  scale_color_manual(
+    name = 'Polymerase',
+    values = c('#d8b365','#5ab4ac')
+  ) +
+  theme(
+    legend.position = 'bottom',
+    plot.title = element_text(size = rel(1.75)),
+    axis.text.x = element_text(size = rel(0.65))
+  ) +
+  labs(
+    y = 'Error Rate',
+    x = 'Region',
+    title = 'Multiple Base Deletions per Base'
+  )
+
+# hypothesis test
+overlap.data %>%
+  group_by(Construct, Polymerase) %>%
+  do(tidy(pairwise.wilcox.test(Norm, Overlap)))
+
+overlap.data %>%
+  filter(Overlap == 'Primers') %>%
+  group_by(Construct) %>%
+  do(tidy(wilcox.test(Norm ~ Polymerase, data=.)))
+
+# median values
+overlap.data %>%
+  group_by(Construct, Polymerase, Overlap) %>%
+  summarise(Median = median(Norm))
+
+# diff between medians
+overlap.data %>%
+  group_by(Construct, Polymerase, Overlap) %>%
+  summarise(Median = median(Norm)) %>%
+  ungroup() %>%
+  spread(Overlap, Median) %>%
+  gather(Region, Value, Overlaps, Primers) %>%
+  mutate(Rate = Other / Value) %>%
+  group_by(Polymerase, Region) %>%
+  summarise(Mean = mean(Rate), sd = sd(Rate))
+```
+
+### Error Rate Table
+Here we calculate the SEM in a more explicit fashion than above. Note that the left_join followed by a NA -> 0 above only really serves as a hack to make the built in mean/sd functions calculate the appropriate number of samples.
+```{r, review-table}
+review.table <- nonDoped %>%
+  bind_rows(review) %>%
+  DistribUncert2() %>%
+  count(Sample, Type, Name, wt=FracCount) %>%
+  inner_join(charCounts, by = c('Sample', 'Name')) %>%
+  summarise(
+    Sum = sum(n * (1000/Len)),
+    SumSq = sum((n * (1000/Len))^2)
+  ) %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  mutate(
+    errRate = Sum / Reads,
+    sd = sqrt((SumSq - (Sum^2 / Reads)) / (Reads - 1)),
+    sem = sd / sqrt(Reads),
+    Sample = recode(Sample, `1_nonDoped` = 'C0-Taq*-1'),
+    Construct = str_extract(Sample, "C([023])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  group_by(Polymerase, Type) %>%
+  summarise(
+    `Error Rate` = mean(errRate),
+    SEM = mean(sem)
+  ) %>%
+  ungroup()
+
+review.table %>%
+  mutate(
+    Value = paste(round(`Error Rate`, 4), "±", round(SEM, 4)),
+    Type = Type %>%
+      factor(levels = c('M', 'D', 'I', 'P', 'S')) %>%
+      recode(D = 'Single Base Deletions', I = 'Single Base Insertions',
+             P = 'Multiple Base Deletions', M = 'Mismatches',
+             S = 'Multiple Base Insertions')
+    ) %>%
+  select(Polymerase, Type, Value) %>%
+  spread(Polymerase, Value)
+```
+
+### Actual Figure
+```{r, Figure_5}
+grid.arrange(
+  arrangeGrob(
+    LabelMaker(review.errRate.plot, 'A)'),
+    LabelMaker(overlap.plot, 'C)'),
+    ncol = 1
+  ),
+  LabelMaker(review.subtype.plot, 'B)'),
+  nrow = 1,
+  widths = c(0.55, 1)
+)
+```
+
+## Suplement
+### Correlation between Repeats
+```{r, corrs}
+review %>%
+  DistribUncert2() %>%
+  count(Sample, Pos, wt = FracCount) %>%
+  ungroup() %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Norm = n / Reads,
+    Construct = str_extract(Sample, "C([23])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  select(-Sample, -Reads, -Errs, -n) %>%
+  spread(Repeat, Norm) %T>%
+  {
+    group_by(., Construct, Polymerase) %>%
+      summarise(Cor = cor(`1`, `2`)) %>%
+      print()
+  } %>%
+  # pretty plot
+  mutate(
+    Construct = if_else(Construct == 'C3', 'C1', 'C2'),
+    Polymerase = if_else(Polymerase == 'Q5', 'Q5', 'KAPA2G Robust')
+  ) %>%
+  ggplot(aes(x=`1`, y=`2`)) +
+  geom_point() +
+  geom_abline() +
+  facet_grid(Polymerase ~ Construct) +
+  scale_x_log10() +
+  scale_y_log10() +
+  annotation_logticks() +
+  labs(
+    x = 'Techical Repeat 1',
+    y = 'Technical Repeat 2'
+  )
+```
+
+### Classic Positional Graph
+
+```{r, review-errs-pos}
+review %>%
+  DistribUncert2() %>%
+  count(Sample, Type, Pos, wt = FracCount) %>%
+  ungroup() %>%
+  mutate(
+    Construct = str_extract(Sample, "C([23])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  group_by(Construct, Polymerase, Type, Pos) %>%
+  summarise(Norm = mean(n / Reads)) %>%
+  # better naming for figure
+  ungroup() %>%
+  mutate(
+    Construct = if_else(Construct == 'C3', 'C1', 'C2'),
+    Polymerase = if_else(Polymerase == 'Q5', 'Q5', 'KAPA2G Robust'),
+    Type = Type %>%
+      factor(levels = c('M', 'D', 'P', 'I', 'S'))  %>%
+      recode(M = 'MM', D = 'Del.', P = 'M. Del.', I = 'Ins.', S = 'M. Ins.')
+  ) %>%
+  ggplot(aes(x=Pos, y=Norm, color=Polymerase)) +
+  geom_point() +
+  geom_smooth(se = F, method = 'loess') +
+  facet_grid(Type ~ Construct) +
+  scale_y_log10() +
+  annotation_logticks(sides = 'l') +
+  scale_color_manual(
+    name = 'Polymerase',
+    values = c('#d8b365','#5ab4ac')
+  ) +
+  theme(legend.position = 'bottom') +
+  labs(
+    x = 'Position',
+    y = 'Error Rate'
+  )
+```
+
+### Mismatch Preference
+```{r, review-mm}
+review.mm <- review %>%
+  filter(Type == 'M') %>%
+  mutate(
+    To = str_sub(Diff, 2, 2),
+    From = str_sub(Diff, 1, 1)
+  ) %>%
+  count(Sample, Pos, From) %>%
+  ungroup() %>%
+  mutate(
+    Construct = str_extract(Sample, "C([23])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+  ) %>%
+  inner_join(rename(review.counts, From=Char), by = c('Construct', 'From')) %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  group_by(Construct, Polymerase, From, Pos) %>%
+  summarise(Norm = mean(n / Count / Reads)) %>%
+  ungroup()
+
+# plot it
+review.mm %>%
+  ggplot(aes(x=From, y=Norm, color=Construct)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(position = position_jitter(w=0.3), size = 0.5, alpha = 0.8) +
+  facet_grid(Polymerase ~ Construct, scales='free_y') +
+  scale_y_log10() +
+  annotation_logticks(sides = 'l')
+
+# significance testing for A/T or G/C broadly
+review.mm %>%
+  mutate(Class = if_else(From %in% c('A', 'T'), 'A/T', 'C/G')) %>%
+  group_by(Construct, Polymerase, Class) %>%
+  summarise(Median = median(Norm))
+
+review.mm %>%
+  mutate(Class = if_else(From %in% c('A', 'T'), 'A/T', 'C/G')) %>%
+  group_by(Construct, Polymerase) %>%
+  do(tidy(wilcox.test(Norm ~ Class, data=.))) %>%
+  select(-method)
+
+# significance testing for all pairwise comparisons
+review.mm %>%
+  group_by(Construct, Polymerase, From) %>%
+  summarise(Median = median(Norm))
+
+review.mm %>%
+  group_by(Construct, Polymerase) %>%
+  do(with(., tidy(pairwise.wilcox.test(Norm, From)))) %>%
+  print(n=24)
+```
+
+### Mismatch Hotspots
+```{r, hot-spots}
+review %>%
+  filter(Type == 'M') %>%
+  count(Sample, Pos, Diff) %>%
+  ungroup() %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Norm = n / Reads, Construct = str_extract(Sample, "C([023])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+    ) %>%
+  filter(Polymerase == 'Taq') %>%
+  tbl_df %>%
+  group_by(Sample) %>%
+  top_n(n=6, wt = Norm) %>%
+  ungroup() %>%
+  filter(Construct == 'C2') %>%
+  arrange(-Norm)
+```
+
+### Polymerase Slippage
+```{r, pol-slip}
+review %>%
+  filter(Type == 'S') %>%
+  count(Sample, Pos, Diff) %>%
+  ungroup() %>%
+  inner_join(readCounts, by = 'Sample') %>%
+  mutate(
+    Norm = n / Reads, Construct = str_extract(Sample, "C([023])"),
+    Polymerase = str_extract(Sample, "-(.*)-") %>% str_replace_all("-", ""),
+    Repeat = str_extract(Sample, "\\d$")
+    ) %>%
+  filter(Polymerase == 'Taq', Construct == 'C2') %>%
+  tbl_df %>%
+  group_by(Sample) %>%
+  top_n(n=6, wt = Norm) %>%
+  ungroup() %>%
+  arrange(-Norm)
+```
+
+### Are Mismatches the Last Base Snythesized
+```{r, last-base}
+last.base <- c(c2, c3) %>%
+  str_split("") %>%
+  unlist() %>%
+  data.table(
+    LastBase = .,
+    Construct = c(rep("C2", 220), rep("C3", 220)),
+    Pos = rep(seq(2, 221), 2)
+  )
+
+last.base.test <- review.mm.subtype %>%
+  select(-Class) %>%
+  inner_join(last.base, by = c('Construct', 'Pos')) %>%
+  mutate(
+    From = str_sub(Diff, 1, 1),
+    To = str_sub(Diff, 2, 2)
+  ) %>%
+  filter(!LastBase == From) %>%
+  mutate(Remain = if_else(LastBase == To, 'Yes', 'No'))
+
+# plot it
+last.base.test %>%
+  ggplot(aes(x=Remain, y=Norm)) +
+  geom_boxplot() +
+  facet_grid(Polymerase ~ Construct, scales='free_y') +
+  scale_y_log10() +
+  annotation_logticks(sides='l')
+
+# doesnt look significant, but to be sure...
+last.base.test %>%
+  group_by(Construct, Polymerase) %>%
+  do(tidy(wilcox.test(Norm ~ Remain, data=.)))
 ```
